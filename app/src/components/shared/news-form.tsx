@@ -11,6 +11,14 @@ import { NewsEditor } from './news-editor'
 import { uploadNewsImage } from '@/hooks/use-news'
 import type { NewsPost, NewsPostInput } from '@/types'
 
+// crypto.randomUUID requires HTTPS — use this fallback instead
+function generateId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
+  })
+}
+
 const newsSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
   excerpt: z.string().min(10, 'Excerpt must be at least 10 characters').max(300, 'Keep excerpt under 300 characters'),
@@ -55,7 +63,7 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
   })
 
   async function handleSubmit(values: NewsFormValues) {
-    const clientId = defaultValues?.id ?? crypto.randomUUID()
+    const clientId = defaultValues?.id ?? generateId()
     setUploading(true)
 
     try {
