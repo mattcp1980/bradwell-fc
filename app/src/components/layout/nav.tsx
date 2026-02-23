@@ -9,8 +9,8 @@ export function Nav() {
       <Link to="/">Bradwell FC</Link>
       <Link to="/fixtures">Fixtures</Link>
       <Link to="/news">News</Link>
-      {user && role === 'parent' && <Link to="/portal">My Portal</Link>}
-      {user && role === 'official' && <Link to="/admin">Admin</Link>}
+      {user && (role === 'admin' || role === 'coach') && <Link to="/portal">My Portal</Link>}
+      {user && role === 'admin' && <Link to="/admin">Admin</Link>}
       {!user && <Link to="/login">Log in</Link>}
     </nav>
   )

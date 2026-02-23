@@ -39,14 +39,14 @@ export function Header() {
             variant="ghost"
             size="sm"
             className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
-            onClick={() => navigate("/portal")}
+            onClick={() => navigate("/login?type=coach")}
           >
-            Manager Login
+            Coach Login
           </Button>
           <Button
             size="sm"
             className="ml-2"
-            onClick={() => navigate("/admin")}
+            onClick={() => navigate("/login?type=admin")}
           >
             Admin Login
           </Button>
@@ -78,14 +78,14 @@ export function Header() {
               variant="ghost"
               size="sm"
               className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
-              onClick={() => { setMobileOpen(false); navigate("/portal"); }}
+              onClick={() => { setMobileOpen(false); navigate("/login?type=coach"); }}
             >
-              Manager Login
+              Coach Login
             </Button>
             <Button
               size="sm"
               className="mt-2 w-fit"
-              onClick={() => { setMobileOpen(false); navigate("/admin"); }}
+              onClick={() => { setMobileOpen(false); navigate("/login?type=admin"); }}
             >
               Admin Login
             </Button>

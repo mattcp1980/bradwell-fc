@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { Mail, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -18,8 +18,19 @@ function getHashError(): string | null {
   return null
 }
 
+type LoginType = 'admin' | 'coach'
+
+const portalLabel: Record<LoginType, string> = {
+  admin: 'Admin Portal',
+  coach: 'Coach Portal',
+}
+
 export function LoginPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, role, loading: authLoading } = useAuth()
+  const [searchParams] = useSearchParams()
+  const loginType: LoginType = searchParams.get('type') === 'coach' ? 'coach' : 'admin'
+  const label = portalLabel[loginType]
+
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
@@ -30,14 +41,14 @@ export function LoginPage() {
     const hashError = getHashError()
     if (hashError) {
       setError(hashError)
-      // Clean the hash from the URL so it doesn't persist on refresh
-      history.replaceState(null, '', window.location.pathname)
+      history.replaceState(null, '', window.location.pathname + window.location.search)
     }
   }, [])
 
-  // Already authenticated — send straight to admin
-  if (!authLoading && user) {
-    return <Navigate to="/admin" replace />
+  // Already authenticated with the right role — send to the appropriate destination
+  if (!authLoading && user && role) {
+    if (role === 'admin') return <Navigate to="/admin" replace />
+    if (role === 'coach') return <Navigate to="/portal" replace />
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -45,11 +56,14 @@ export function LoginPage() {
     setSubmitting(true)
     setError(null)
 
-    // Redirect back to /login so the Supabase client can process the token
-    // before any auth-guarded route redirects strip the hash fragment.
+    // Redirect back to /login (with type param) so the Supabase client can process
+    // the token before any auth-guarded route strips the hash fragment.
+    const redirectTo =
+      window.location.origin + '/login?type=' + loginType
+
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + '/login' },
+      options: { emailRedirectTo: redirectTo },
     })
 
     setSubmitting(false)
@@ -75,7 +89,7 @@ export function LoginPage() {
             Bradwell FC
           </h1>
           <p className="text-secondary-foreground/50 text-sm mt-1 tracking-wide uppercase font-heading">
-            Staff Portal
+            {label}
           </p>
         </div>
 

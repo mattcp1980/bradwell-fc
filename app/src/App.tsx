@@ -12,21 +12,27 @@ import { LoginPage } from '@/pages/public/login-page'
 export default function App() {
   return (
     <Routes>
-      {/* Public routes */}
+      {/* Public routes — no auth required */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/fixtures" element={<FixturesPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/parents" element={<ParentsPage />} />
-        <Route path="/portal" element={<ParentDashboard />} />
       </Route>
 
       {/* Standalone full-screen login — no header/footer */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Auth-guarded routes — redirect to /login if not authenticated */}
+      {/* Coach portal — admin and coach roles */}
       <Route element={<PublicLayout />}>
-        <Route element={<RequireAuth />}>
+        <Route element={<RequireAuth allowedRoles={['admin', 'coach']} />}>
+          <Route path="/portal" element={<ParentDashboard />} />
+        </Route>
+      </Route>
+
+      {/* Admin dashboard — admin role only */}
+      <Route element={<PublicLayout />}>
+        <Route element={<RequireAuth allowedRoles={['admin']} />}>
           <Route path="/admin" element={<AdminDashboard />} />
         </Route>
       </Route>

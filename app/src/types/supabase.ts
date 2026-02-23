@@ -4,7 +4,7 @@
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-export type UserRole = 'public' | 'parent' | 'official'
+export type UserRole = 'admin' | 'coach'
 
 export interface Database {
   PostgrestVersion: "12"

@@ -5,7 +5,7 @@ import type { UserRole } from '@/types'
 
 interface AuthState {
   user: User | null
-  role: UserRole | null
+  role: UserRole | null  // null = authenticated but no recognised role
   loading: boolean
 }
 
@@ -39,17 +39,19 @@ export function useAuth(): AuthState {
   }, [])
 
   async function fetchProfile(user: User) {
+    // Role is determined by the club_officials record matching the signed-in email.
+    // If no matching record exists, the user has no access to protected areas.
     const { data } = await supabase
-      .from('profiles')
+      .from('club_officials')
       .select('role')
-      .eq('id', user.id)
+      .eq('email', user.email ?? '')
       .single()
 
-    const profile = data as { role: UserRole } | null
+    const official = data as { role: UserRole } | null
 
     setState({
       user,
-      role: profile?.role ?? 'parent',
+      role: official?.role ?? null,
       loading: false,
     })
   }

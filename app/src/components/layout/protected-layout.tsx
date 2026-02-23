@@ -7,9 +7,8 @@ interface ProtectedLayoutProps {
 }
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
-  public: 0,
-  parent: 1,
-  official: 2,
+  coach: 1,
+  admin: 2,
 }
 
 export function ProtectedLayout({ requiredRole }: ProtectedLayoutProps) {
