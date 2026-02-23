@@ -1,0 +1,12 @@
+{
+  "name": "bradwell-fc-infra",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@pulumi/gcp": "^8.0.0",
+    "@pulumi/pulumi": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

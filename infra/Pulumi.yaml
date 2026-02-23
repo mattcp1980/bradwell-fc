@@ -1,0 +1,5 @@
+name: bradwell-fc
+description: Bradwell FC - GCP infrastructure
+runtime: nodejs
+backend:
+  url: gs://bradwell-fc-pulumi-state

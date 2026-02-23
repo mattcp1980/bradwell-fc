@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+bin/
+
+# Environment
+.env.local
+.env.*.local
+*.local
+
+# Pulumi
+.pulumi/
+
+# OS
+.DS_Store
+
+# Logs
+*.log

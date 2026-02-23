@@ -1,0 +1,4 @@
+config:
+  gcp:project: bradwell-fc-prod
+  gcp:region: europe-west2
+  bradwell-fc:env: prod
