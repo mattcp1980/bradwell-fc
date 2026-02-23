@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Mail, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -8,12 +8,32 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import clubBadge from '@/assets/club-badge.jpg'
 
+// Parse Supabase error params from the URL hash (e.g. #error=access_denied&error_description=...)
+function getHashError(): string | null {
+  const hash = window.location.hash.slice(1)
+  const params = new URLSearchParams(hash)
+  const code = params.get('error_code')
+  if (code === 'otp_expired') return 'That login link has expired. Please request a new one.'
+  if (params.get('error')) return 'The login link was invalid. Please request a new one.'
+  return null
+}
+
 export function LoginPage() {
   const { user, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Surface any error passed back in the URL hash from Supabase
+  useEffect(() => {
+    const hashError = getHashError()
+    if (hashError) {
+      setError(hashError)
+      // Clean the hash from the URL so it doesn't persist on refresh
+      history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
 
   // Already authenticated — send straight to admin
   if (!authLoading && user) {
@@ -25,9 +45,11 @@ export function LoginPage() {
     setSubmitting(true)
     setError(null)
 
+    // Redirect back to /login so the Supabase client can process the token
+    // before any auth-guarded route redirects strip the hash fragment.
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin + '/admin' },
+      options: { emailRedirectTo: window.location.origin + '/login' },
     })
 
     setSubmitting(false)
