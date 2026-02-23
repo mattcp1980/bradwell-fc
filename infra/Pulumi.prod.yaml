@@ -2,3 +2,4 @@ config:
   gcp:project: bradwell-fc-prod
   gcp:region: europe-west2
   bradwell-fc:env: prod
+encryptionsalt: v1:wANKUrSpjIU=:v1:z7Xok1c6ykaOh+Ha:YS/UISk5gXUevq8623cvAIJ1ELo2Lw==

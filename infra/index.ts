@@ -17,7 +17,7 @@ const commonLabels = {
 // ---------------------------------------------------------------------------
 const siteBucket = new gcp.storage.Bucket('site-bucket', {
   name: `bradwell-fc-site-${env}`,
-  location: region.toUpperCase().replace('-', '_'),
+  location: region.toUpperCase(),
   uniformBucketLevelAccess: true,
   website: {
     mainPageSuffix: 'index.html',
