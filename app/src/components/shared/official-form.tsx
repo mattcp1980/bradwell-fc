@@ -27,7 +27,7 @@ const officialSchema = z.object({
   email: z.string().email('Enter a valid email address'),
   mobile: z.string().min(7, 'Enter a valid mobile number'),
   role: z.enum(['admin', 'coach']),
-  teams: z.array(z.string()).min(1, 'Select at least one team'),
+  teams: z.array(z.string()),
   is_primary_contact: z.boolean(),
 })
 

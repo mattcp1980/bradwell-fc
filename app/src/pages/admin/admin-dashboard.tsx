@@ -49,7 +49,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
 // ---------------------------------------------------------------------------
 
 function TeamsSection() {
-  const { data: teams = [], isLoading, error } = useTeams();
+  const { data: teams = [], isLoading } = useTeams();
   const addTeam = useAddTeam();
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
@@ -84,17 +84,12 @@ function TeamsSection() {
       {isLoading && (
         <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
       )}
-      {error && (
-        <p className="px-6 py-8 text-sm text-destructive text-center">
-          Failed to load teams. Please try again.
-        </p>
-      )}
-      {!isLoading && !error && teams.length === 0 && (
+      {!isLoading && teams.length === 0 && (
         <p className="px-6 py-8 text-sm text-muted-foreground text-center">
           No teams added yet. Click "Add Team" to get started.
         </p>
       )}
-      {!isLoading && !error && teams.length > 0 && (
+      {!isLoading && teams.length > 0 && (
         <div className="divide-y divide-border">
           {teams.map((team) => (
             <div key={team.id} className="px-6 py-4 flex items-center justify-between gap-4">
@@ -242,7 +237,7 @@ function OfficialGroup({
 }
 
 function OfficialsSection() {
-  const { data: officials = [], isLoading, error } = useOfficials();
+  const { data: officials = [], isLoading } = useOfficials();
   const { data: teams = [] } = useTeams();
   const addOfficial = useAddOfficial();
   const updateOfficial = useUpdateOfficial();
@@ -282,12 +277,7 @@ function OfficialsSection() {
       {isLoading && (
         <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
       )}
-      {error && (
-        <p className="px-6 py-8 text-sm text-destructive text-center">
-          Failed to load officials. Please try again.
-        </p>
-      )}
-      {!isLoading && !error && (
+      {!isLoading && (
         <>
           <OfficialGroup label="Admins" officials={admins} onEdit={setEditTarget} onDelete={handleDelete} />
           <OfficialGroup label="Coaches" officials={coaches} onEdit={setEditTarget} onDelete={handleDelete} />
