@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -136,6 +137,7 @@ function TeamsSection() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add team</DialogTitle>
+            <DialogDescription>Enter the team details below.</DialogDescription>
           </DialogHeader>
           <TeamForm
             onSubmit={handleAdd}
@@ -149,6 +151,7 @@ function TeamsSection() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit team</DialogTitle>
+            <DialogDescription>Update the team details below.</DialogDescription>
           </DialogHeader>
           {editTarget && (
             <TeamForm
@@ -293,6 +296,7 @@ function OfficialsSection() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add club official</DialogTitle>
+            <DialogDescription>Enter the official's details below.</DialogDescription>
           </DialogHeader>
           <OfficialForm
             onSubmit={handleAdd}
@@ -307,6 +311,7 @@ function OfficialsSection() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit official</DialogTitle>
+            <DialogDescription>Update the official's details below.</DialogDescription>
           </DialogHeader>
           {editTarget && (
             <OfficialForm

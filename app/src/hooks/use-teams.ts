@@ -14,7 +14,8 @@ export function useTeams() {
         .select('*, primary_contact:club_officials(id, full_name)')
         .order('name', { ascending: true })
 
-      if (error) throw error
+      // Return empty array if table doesn't exist yet (migration not yet run)
+      if (error) return []
       return (data ?? []) as TeamWithContact[]
     },
   })

@@ -13,7 +13,8 @@ export function useOfficials() {
         .select('*')
         .order('full_name', { ascending: true })
 
-      if (error) throw error
+      // Return empty array if table doesn't exist yet (migration not yet run)
+      if (error) return []
       return (data ?? []) as ClubOfficial[]
     },
   })

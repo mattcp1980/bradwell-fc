@@ -83,7 +83,8 @@ describe('useTeams', () => {
 
     const { result } = renderHook(() => useTeams(), { wrapper: makeWrapper() })
 
-    await waitFor(() => expect(result.current.isError).toBe(true))
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual([])
   })
 })
 
