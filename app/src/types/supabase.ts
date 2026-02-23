@@ -7,8 +7,42 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type UserRole = 'public' | 'parent' | 'official'
 
 export interface Database {
+  PostgrestVersion: "12"
   public: {
     Tables: {
+      club_officials: {
+        Row: {
+          id: string
+          full_name: string
+          email: string
+          mobile: string
+          role: 'admin' | 'coach'
+          teams: string[]
+          is_primary_contact: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          full_name: string
+          email: string
+          mobile: string
+          role: 'admin' | 'coach'
+          teams?: string[]
+          is_primary_contact?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          full_name?: string
+          email?: string
+          mobile?: string
+          role?: 'admin' | 'coach'
+          teams?: string[]
+          is_primary_contact?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string
@@ -28,6 +62,7 @@ export interface Database {
           full_name?: string | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>

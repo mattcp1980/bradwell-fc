@@ -1,8 +1,17 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { OfficialForm } from "@/components/shared/official-form";
+import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
+import type { ClubOfficial, ClubOfficialInput } from "@/types";
 
-type AdminSection = "news" | "training" | "documents";
+type AdminSection = "news" | "training" | "documents" | "officials";
 
 const placeholderNews = [
   { id: 1, title: "Cup Run Continues with Dominant Win", category: "Match Report", date: "18 Feb 2026", published: true },
@@ -29,7 +38,168 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
   { id: "news", label: "News", icon: Newspaper },
   { id: "training", label: "Training Timetable", icon: Calendar },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "officials", label: "Club Officials", icon: Users },
 ];
+
+// ---------------------------------------------------------------------------
+// Officials section
+// ---------------------------------------------------------------------------
+
+function OfficialGroup({
+  label,
+  officials,
+  onEdit,
+  onDelete,
+}: {
+  label: string;
+  officials: ClubOfficial[];
+  onEdit: (o: ClubOfficial) => void;
+  onDelete: (id: string) => void;
+}) {
+  if (officials.length === 0) return null;
+  return (
+    <div>
+      <div className="px-6 py-2 bg-muted/30 border-b border-border">
+        <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground">{label}</p>
+      </div>
+      <div className="divide-y divide-border">
+        {officials.map((official) => (
+          <div key={official.id} className="px-6 py-4 flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-sm font-semibold text-foreground">{official.full_name}</span>
+                {official.is_primary_contact && (
+                  <span className="inline-flex items-center gap-1 text-xs font-heading uppercase tracking-wide text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
+                    <Star size={10} />
+                    Primary contact
+                  </span>
+                )}
+              </div>
+              {official.teams.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {official.teams.map((team) => (
+                    <span key={team} className="text-xs bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                      {team}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {official.email} · {official.mobile}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                onClick={() => onEdit(official)}
+              >
+                <Pencil size={14} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={() => onDelete(official.id)}
+              >
+                <Trash2 size={14} />
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OfficialsSection() {
+  const { data: officials = [], isLoading, error } = useOfficials();
+  const addOfficial = useAddOfficial();
+  const updateOfficial = useUpdateOfficial();
+  const deleteOfficial = useDeleteOfficial();
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<ClubOfficial | null>(null);
+
+  const admins = officials.filter((o) => o.role === "admin");
+  const coaches = officials.filter((o) => o.role === "coach");
+
+  function handleAdd(input: ClubOfficialInput) {
+    addOfficial.mutate(input, { onSuccess: () => setAddOpen(false) });
+  }
+
+  function handleUpdate(input: ClubOfficialInput) {
+    if (!editTarget) return;
+    updateOfficial.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Remove this official from the club?")) return;
+    deleteOfficial.mutate(id);
+  }
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 className="font-heading text-base uppercase tracking-wider">Club Officials</h2>
+        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+          <Plus size={14} />
+          Add Official
+        </Button>
+      </div>
+
+      {isLoading && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      )}
+      {error && (
+        <p className="px-6 py-8 text-sm text-destructive text-center">
+          Failed to load officials. Please try again.
+        </p>
+      )}
+      {!isLoading && !error && (
+        <>
+          <OfficialGroup label="Admins" officials={admins} onEdit={setEditTarget} onDelete={handleDelete} />
+          <OfficialGroup label="Coaches" officials={coaches} onEdit={setEditTarget} onDelete={handleDelete} />
+          {officials.length === 0 && (
+            <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+              No officials added yet. Click "Add Official" to get started.
+            </p>
+          )}
+        </>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add club official</DialogTitle>
+          </DialogHeader>
+          <OfficialForm
+            onSubmit={handleAdd}
+            onCancel={() => setAddOpen(false)}
+            isPending={addOfficial.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit official</DialogTitle>
+          </DialogHeader>
+          {editTarget && (
+            <OfficialForm
+              defaultValues={editTarget}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditTarget(null)}
+              isPending={updateOfficial.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>("news");
@@ -203,6 +373,9 @@ export function AdminDashboard() {
                   </div>
                 </section>
               )}
+
+              {/* Officials */}
+              {activeSection === "officials" && <OfficialsSection />}
 
             </div>
           </div>

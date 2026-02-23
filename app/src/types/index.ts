@@ -29,3 +29,16 @@ export interface NewsPost {
   published_at: string
   author_id: string
 }
+
+export interface ClubOfficial {
+  id: string
+  full_name: string
+  email: string
+  mobile: string
+  role: 'admin' | 'coach'
+  teams: string[]
+  is_primary_contact: boolean
+  created_at: string
+}
+
+export type ClubOfficialInput = Omit<ClubOfficial, 'id' | 'created_at'>
