@@ -18,9 +18,11 @@ export default function App() {
         <Route path="/fixtures" element={<FixturesPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/parents" element={<ParentsPage />} />
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/portal" element={<ParentDashboard />} />
       </Route>
+
+      {/* Standalone full-screen login — no header/footer */}
+      <Route path="/login" element={<LoginPage />} />
 
       {/* Auth-guarded routes — redirect to /login if not authenticated */}
       <Route element={<PublicLayout />}>

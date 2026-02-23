@@ -22,7 +22,7 @@ const siteBucket = new gcp.storage.Bucket('site-bucket', {
   uniformBucketLevelAccess: true,
   website: {
     mainPageSuffix: 'index.html',
-    notFoundPage: 'index.html', // SPA fallback
+    notFoundPage: 'index.html',
   },
   labels: commonLabels,
 })
@@ -36,6 +36,8 @@ new gcp.storage.BucketIAMBinding('site-bucket-public', {
 
 // ---------------------------------------------------------------------------
 // Load balancer with CDN - serves the static site bucket
+// Uses EXTERNAL_MANAGED scheme to support custom error response policies
+// (required for SPA fallback: serve index.html on 404s from the bucket).
 // ---------------------------------------------------------------------------
 const backendBucket = new gcp.compute.BackendBucket('site-backend', {
   bucketName: siteBucket.name,
@@ -47,8 +49,18 @@ const backendBucket = new gcp.compute.BackendBucket('site-backend', {
   },
 })
 
+// SPA fallback: when the bucket returns 404 for an unknown path (e.g. /admin),
+// serve index.html with a 200 so React Router handles the route client-side.
 const urlMap = new gcp.compute.URLMap('site-url-map', {
   defaultService: backendBucket.selfLink,
+  defaultCustomErrorResponsePolicy: {
+    errorResponseRules: [{
+      matchResponseCodes: ['404'],
+      path: '/index.html',
+      overrideResponseCode: 200,
+    }],
+    errorService: backendBucket.selfLink,
+  },
 })
 
 // ---------------------------------------------------------------------------
@@ -69,10 +81,13 @@ const globalAddress = new gcp.compute.GlobalAddress('site-ip', {
   labels: commonLabels,
 })
 
+// EXTERNAL_MANAGED scheme is required for advanced URL map features (custom error responses).
+// Note: changing loadBalancingScheme requires replacing the forwarding rules.
 new gcp.compute.GlobalForwardingRule('site-https-forwarding-rule', {
   target: httpsProxy.selfLink,
   ipAddress: globalAddress.address,
   portRange: '443',
+  loadBalancingScheme: 'EXTERNAL_MANAGED',
 })
 
 // ---------------------------------------------------------------------------
@@ -89,12 +104,11 @@ const httpProxy = new gcp.compute.TargetHttpProxy('site-http-proxy', {
   urlMap: redirectUrlMap.selfLink,
 })
 
-// Keep logical name 'site-forwarding-rule' so Pulumi updates the existing GCP resource
-// in-place (retargets to redirect proxy) rather than creating a conflicting second rule.
 new gcp.compute.GlobalForwardingRule('site-forwarding-rule', {
   target: httpProxy.selfLink,
   ipAddress: globalAddress.address,
   portRange: '80',
+  loadBalancingScheme: 'EXTERNAL_MANAGED',
 })
 
 // ---------------------------------------------------------------------------
