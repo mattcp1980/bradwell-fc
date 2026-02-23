@@ -11,12 +11,14 @@ import {
 import { OfficialForm } from "@/components/shared/official-form";
 import { TeamForm } from "@/components/shared/team-form";
 import { NewsForm } from "@/components/shared/news-form";
+import { DocumentForm } from "@/components/shared/document-form";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
 import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
+import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/use-documents";
 import { useAuth } from "@/hooks/use-auth";
 import { format } from "date-fns";
-import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput } from "@/types";
+import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput } from "@/types";
 
 type AdminSection = "news" | "training" | "documents" | "officials" | "teams";
 
@@ -27,12 +29,6 @@ const placeholderTimetable = [
   { id: 2, team: "U10 Blues", day: "Thursday", time: "18:00", venue: "Bradwell Park, Pitch 2" },
   { id: 3, team: "U12 Reds", day: "Wednesday", time: "18:30", venue: "Bradwell Park, Pitch 1" },
   { id: 4, team: "Open Age First Team", day: "Tuesday", time: "19:30", venue: "Bradwell Park, Pitch 1" },
-];
-
-const placeholderDocuments = [
-  { id: 1, name: "FA Respect Code of Conduct", category: "Policy", audience: "Both", date: "Jan 2026" },
-  { id: 2, name: "Safeguarding Policy 2025-26", category: "Policy", audience: "Both", date: "Aug 2025" },
-  { id: 3, name: "Emergency Contact Form", category: "Form", audience: "Managers", date: "Aug 2025" },
 ];
 
 const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = [
@@ -464,6 +460,120 @@ function OfficialsSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Documents section
+// ---------------------------------------------------------------------------
+
+type AudienceBadgeProps = { audience: Document['audience'] }
+
+function AudienceBadge({ audience }: AudienceBadgeProps) {
+  if (audience === 'parents') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-100 text-blue-700">Parents</span>
+  }
+  if (audience === 'general') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700">General</span>
+  }
+  return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">Admin Only</span>
+}
+
+function DocumentsSection() {
+  const { user } = useAuth();
+  const { data: docs = [], isLoading } = useDocuments();
+  const addDocument = useAddDocument();
+  const deleteDocument = useDeleteDocument();
+
+  const [uploadOpen, setUploadOpen] = useState(false);
+
+  const uploadedBy = user?.id ?? '';
+
+  function handleAdd(input: DocumentInput, id: string) {
+    addDocument.mutate({ ...input, id }, { onSuccess: () => setUploadOpen(false) });
+  }
+
+  function handleDelete(doc: Document) {
+    if (!confirm(`Delete "${doc.name}"? This cannot be undone.`)) return;
+    deleteDocument.mutate(doc);
+  }
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 className="font-heading text-base uppercase tracking-wider">Documents</h2>
+        <Button size="sm" className="gap-1.5" onClick={() => setUploadOpen(true)}>
+          <Upload size={14} />
+          Upload
+        </Button>
+      </div>
+
+      {isLoading && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      )}
+      {!isLoading && docs.length === 0 && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+          No documents uploaded yet. Click "Upload" to add one.
+        </p>
+      )}
+      {!isLoading && docs.length > 0 && (
+        <div className="divide-y divide-border">
+          {docs.map((doc) => (
+            <div key={doc.id} className="px-6 py-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <FileText className="text-muted-foreground shrink-0" size={16} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <AudienceBadge audience={doc.audience} />
+                    {doc.category && (
+                      <span className="text-xs text-muted-foreground">{doc.category}</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      · Added {format(new Date(doc.created_at), 'd MMM yyyy')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={doc.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  title="Open document"
+                >
+                  <FileText size={14} />
+                </a>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDelete(doc)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upload document</DialogTitle>
+            <DialogDescription>Select a file and set its audience below.</DialogDescription>
+          </DialogHeader>
+          <DocumentForm
+            uploadedBy={uploadedBy}
+            onSubmit={handleAdd}
+            onCancel={() => setUploadOpen(false)}
+            isPending={addDocument.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main dashboard
 // ---------------------------------------------------------------------------
 
@@ -560,42 +670,7 @@ export function AdminDashboard() {
               )}
 
               {/* Documents */}
-              {activeSection === "documents" && (
-                <section className="bg-card border border-border rounded-lg overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h2 className="font-heading text-base uppercase tracking-wider">Documents</h2>
-                    <Button size="sm" className="gap-1.5">
-                      <Upload size={14} />
-                      Upload
-                    </Button>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {placeholderDocuments.map((doc) => (
-                      <div key={doc.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <FileText className="text-muted-foreground shrink-0" size={16} />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-muted-foreground">{doc.category}</span>
-                              <span className="text-xs text-muted-foreground">·</span>
-                              <span className="text-xs font-heading uppercase tracking-wide text-primary">
-                                {doc.audience}
-                              </span>
-                              <span className="text-xs text-muted-foreground">· Added {doc.date}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {activeSection === "documents" && <DocumentsSection />}
 
               {/* Teams */}
               {activeSection === "teams" && <TeamsSection />}

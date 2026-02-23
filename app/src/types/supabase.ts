@@ -123,6 +123,46 @@ export interface Database {
           }
         ]
       }
+      documents: {
+        Row: {
+          id: string
+          name: string
+          file_url: string
+          file_path: string
+          category: string
+          audience: 'admin' | 'parents' | 'general'
+          uploaded_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          file_url: string
+          file_path: string
+          category?: string
+          audience: 'admin' | 'parents' | 'general'
+          uploaded_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          file_url?: string
+          file_path?: string
+          category?: string
+          audience?: 'admin' | 'parents' | 'general'
+          uploaded_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           id: string

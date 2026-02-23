@@ -1,10 +1,6 @@
 import { ExternalLink, FileText, Calendar, ChevronRight } from "lucide-react";
-
-const placeholderDocuments = [
-  { id: 1, name: "FA Respect Code of Conduct", category: "Policy", date: "Jan 2026" },
-  { id: 2, name: "Safeguarding Policy 2025-26", category: "Policy", date: "Aug 2025" },
-  { id: 3, name: "Emergency Contact Form", category: "Form", date: "Aug 2025" },
-];
+import { format } from "date-fns";
+import { useParentDocuments } from "@/hooks/use-documents";
 
 const placeholderSchedule = [
   { team: "U10 Reds", day: "Tuesday", time: "18:00", venue: "Bradwell Park, Pitch 1" },
@@ -13,6 +9,8 @@ const placeholderSchedule = [
 ];
 
 export function ParentDashboard() {
+  const { data: documents = [], isLoading: docsLoading } = useParentDocuments();
+
   return (
     <div className="pt-24 pb-20">
       <div className="container px-4">
@@ -71,21 +69,38 @@ export function ParentDashboard() {
                   </h2>
                 </div>
                 <div className="divide-y divide-border">
-                  {placeholderDocuments.map((doc) => (
-                    <div key={doc.id} className="px-6 py-4 flex items-center justify-between group hover:bg-muted/30 transition-colors cursor-pointer">
+                  {docsLoading && (
+                    [1, 2, 3].map((n) => (
+                      <div key={n} className="px-6 py-4 flex items-center gap-3">
+                        <div className="h-4 w-4 bg-muted rounded animate-pulse shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+                          <div className="h-2.5 bg-muted rounded animate-pulse w-1/3" />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {!docsLoading && documents.map((doc) => (
+                    <a
+                      key={doc.id}
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-4 flex items-center justify-between group hover:bg-muted/30 transition-colors"
+                    >
                       <div className="flex items-center gap-3">
                         <FileText className="text-muted-foreground shrink-0" size={16} />
                         <div>
                           <p className="text-sm font-medium text-foreground">{doc.name}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {doc.category} · Added {doc.date}
+                            {doc.category ? `${doc.category} · ` : ''}Added {format(new Date(doc.created_at), 'd MMM yyyy')}
                           </p>
                         </div>
                       </div>
                       <ChevronRight className="text-muted-foreground group-hover:text-primary transition-colors" size={16} />
-                    </div>
+                    </a>
                   ))}
-                  {placeholderDocuments.length === 0 && (
+                  {!docsLoading && documents.length === 0 && (
                     <p className="px-6 py-8 text-sm text-muted-foreground text-center">
                       No documents available yet.
                     </p>

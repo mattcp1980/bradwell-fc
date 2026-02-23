@@ -3,6 +3,7 @@ import * as gcp from '@pulumi/gcp'
 
 const config = new pulumi.Config()
 const env = config.require('env')
+const domain = config.require('domain')
 const gcpConfig = new pulumi.Config('gcp')
 const region = gcpConfig.require('region')
 const project = gcpConfig.require('project')
@@ -50,14 +51,46 @@ const urlMap = new gcp.compute.URLMap('site-url-map', {
   defaultService: backendBucket.selfLink,
 })
 
-const httpProxy = new gcp.compute.TargetHttpProxy('site-http-proxy', {
+// ---------------------------------------------------------------------------
+// HTTPS - managed SSL certificate + proxy on port 443
+// ---------------------------------------------------------------------------
+const sslCert = new gcp.compute.ManagedSslCertificate('site-ssl-cert', {
+  managed: {
+    domains: [domain],
+  },
+})
+
+const httpsProxy = new gcp.compute.TargetHttpsProxy('site-https-proxy', {
   urlMap: urlMap.selfLink,
+  sslCertificates: [sslCert.selfLink],
 })
 
 const globalAddress = new gcp.compute.GlobalAddress('site-ip', {
   labels: commonLabels,
 })
 
+new gcp.compute.GlobalForwardingRule('site-https-forwarding-rule', {
+  target: httpsProxy.selfLink,
+  ipAddress: globalAddress.address,
+  portRange: '443',
+})
+
+// ---------------------------------------------------------------------------
+// HTTP → HTTPS redirect
+// ---------------------------------------------------------------------------
+const redirectUrlMap = new gcp.compute.URLMap('site-http-redirect', {
+  defaultUrlRedirect: {
+    httpsRedirect: true,
+    stripQuery: false,
+  },
+})
+
+const httpProxy = new gcp.compute.TargetHttpProxy('site-http-proxy', {
+  urlMap: redirectUrlMap.selfLink,
+})
+
+// Keep logical name 'site-forwarding-rule' so Pulumi updates the existing GCP resource
+// in-place (retargets to redirect proxy) rather than creating a conflicting second rule.
 new gcp.compute.GlobalForwardingRule('site-forwarding-rule', {
   target: httpProxy.selfLink,
   ipAddress: globalAddress.address,
@@ -72,7 +105,7 @@ new gcp.compute.GlobalForwardingRule('site-forwarding-rule', {
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
-export const siteUrl = pulumi.interpolate`http://${globalAddress.address}`
+export const siteUrl = `https://${domain}`
 export const bucketName = siteBucket.name
 export const projectId = project
 export const deployedRegion = region

@@ -67,3 +67,18 @@ export type TeamInput = Omit<Team, 'id' | 'created_at'>
 export interface TeamWithContact extends Team {
   primary_contact: { id: string; full_name: string } | null
 }
+
+export type DocumentAudience = 'admin' | 'parents' | 'general'
+
+export interface Document {
+  id: string
+  name: string
+  file_url: string
+  file_path: string
+  category: string
+  audience: DocumentAudience
+  uploaded_by: string
+  created_at: string
+}
+
+export type DocumentInput = Omit<Document, 'id' | 'created_at'>

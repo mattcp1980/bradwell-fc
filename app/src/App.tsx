@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { PublicLayout } from '@/components/layout/public-layout'
+import { RequireAuth } from '@/components/layout/require-auth'
 import { HomePage } from '@/pages/public/home-page'
 import { FixturesPage } from '@/pages/public/fixtures-page'
 import { NewsPage } from '@/pages/public/news-page'
@@ -18,12 +19,14 @@ export default function App() {
         <Route path="/news" element={<NewsPage />} />
         <Route path="/parents" element={<ParentsPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/portal" element={<ParentDashboard />} />
       </Route>
 
-      {/* TODO: restore auth guards before go-live */}
+      {/* Auth-guarded routes — redirect to /login if not authenticated */}
       <Route element={<PublicLayout />}>
-        <Route path="/portal" element={<ParentDashboard />} />
-        <Route path="/admin" element={<AdminDashboard />} />
+        <Route element={<RequireAuth />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+        </Route>
       </Route>
     </Routes>
   )
