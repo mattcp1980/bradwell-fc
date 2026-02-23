@@ -10,17 +10,15 @@ import {
 } from "@/components/ui/dialog";
 import { OfficialForm } from "@/components/shared/official-form";
 import { TeamForm } from "@/components/shared/team-form";
+import { NewsForm } from "@/components/shared/news-form";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
-import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact } from "@/types";
+import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
+import { useAuth } from "@/hooks/use-auth";
+import { format } from "date-fns";
+import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput } from "@/types";
 
 type AdminSection = "news" | "training" | "documents" | "officials" | "teams";
-
-const placeholderNews = [
-  { id: 1, title: "Cup Run Continues with Dominant Win", category: "Match Report", date: "18 Feb 2026", published: true },
-  { id: 2, title: "New Training Sessions for Spring Term", category: "Club News", date: "14 Feb 2026", published: true },
-  { id: 3, title: "Volunteers Needed for Tournament Day", category: "Events", date: "10 Feb 2026", published: false },
-];
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -44,6 +42,143 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
   { id: "teams", label: "Teams", icon: Shield },
   { id: "officials", label: "Club Officials", icon: Users },
 ];
+
+// ---------------------------------------------------------------------------
+// News section
+// ---------------------------------------------------------------------------
+
+type StatusBadgeProps = { status: NewsPost['status'] }
+
+function StatusBadge({ status }: StatusBadgeProps) {
+  if (status === 'published') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700">Published</span>
+  }
+  if (status === 'scheduled') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-700">Scheduled</span>
+  }
+  return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">Draft</span>
+}
+
+function NewsSection() {
+  const { user } = useAuth();
+  const { data: posts = [], isLoading } = useAllNews();
+  const addNews = useAddNews();
+  const updateNews = useUpdateNews();
+  const deleteNews = useDeleteNews();
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<NewsPost | null>(null);
+
+  const authorId = user?.id ?? '';
+
+  function handleAdd(input: NewsPostInput, clientId: string) {
+    addNews.mutate({ ...input, id: clientId }, { onSuccess: () => setAddOpen(false) });
+  }
+
+  function handleUpdate(input: NewsPostInput) {
+    if (!editTarget) return;
+    updateNews.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Delete this article? This cannot be undone.")) return;
+    deleteNews.mutate(id);
+  }
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 className="font-heading text-base uppercase tracking-wider">News Posts</h2>
+        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+          <Plus size={14} />
+          New Post
+        </Button>
+      </div>
+
+      {isLoading && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      )}
+      {!isLoading && posts.length === 0 && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+          No articles yet. Click "New Post" to get started.
+        </p>
+      )}
+      {!isLoading && posts.length > 0 && (
+        <div className="divide-y divide-border">
+          {posts.map((post) => (
+            <div key={post.id} className="px-6 py-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <StatusBadge status={post.status} />
+                  {post.status === 'scheduled' && post.scheduled_at && (
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(post.scheduled_at), 'd MMM yyyy, HH:mm')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-foreground truncate">{post.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {format(new Date(post.created_at), 'd MMM yyyy')}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setEditTarget(post)}
+                >
+                  <Pencil size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDelete(post.id)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>New article</DialogTitle>
+            <DialogDescription>Write and publish a news article.</DialogDescription>
+          </DialogHeader>
+          <NewsForm
+            authorId={authorId}
+            onSubmit={handleAdd}
+            onCancel={() => setAddOpen(false)}
+            isPending={addNews.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit article</DialogTitle>
+            <DialogDescription>Update the article details below.</DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <NewsForm
+              defaultValues={editTarget}
+              authorId={authorId}
+              onSubmit={(input) => handleUpdate(input)}
+              onCancel={() => setEditTarget(null)}
+              isPending={updateNews.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Teams section
@@ -378,47 +513,7 @@ export function AdminDashboard() {
             <div className="lg:col-span-3">
 
               {/* News */}
-              {activeSection === "news" && (
-                <section className="bg-card border border-border rounded-lg overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h2 className="font-heading text-base uppercase tracking-wider">News Posts</h2>
-                    <Button size="sm" className="gap-1.5">
-                      <Plus size={14} />
-                      New Post
-                    </Button>
-                  </div>
-                  <div className="divide-y divide-border">
-                    {placeholderNews.map((post) => (
-                      <div key={post.id} className="px-6 py-4 flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-heading uppercase tracking-wider text-primary">
-                              {post.category}
-                            </span>
-                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                              post.published
-                                ? "bg-green-100 text-green-700"
-                                : "bg-muted text-muted-foreground"
-                            }`}>
-                              {post.published ? "Published" : "Draft"}
-                            </span>
-                          </div>
-                          <p className="text-sm font-semibold text-foreground truncate">{post.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{post.date}</p>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                            <Pencil size={14} />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                            <Trash2 size={14} />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+              {activeSection === "news" && <NewsSection />}
 
               {/* Training timetable */}
               {activeSection === "training" && (

@@ -1,40 +1,14 @@
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-
-interface NewsItem {
-  id: number;
-  title: string;
-  excerpt: string;
-  date: string;
-  category: string;
-}
-
-// Placeholder items until the news page is wired to Supabase
-const placeholderNews: NewsItem[] = [
-  {
-    id: 1,
-    title: "Cup Run Continues with Dominant Win",
-    excerpt: "Bradwell FC progressed to the quarter-finals with a commanding 4-0 victory at home.",
-    date: "18 Feb 2026",
-    category: "Match Report",
-  },
-  {
-    id: 2,
-    title: "New Training Sessions for Spring Term",
-    excerpt: "Updated training schedule now available. Wednesday sessions move to 6pm from March.",
-    date: "14 Feb 2026",
-    category: "Club News",
-  },
-  {
-    id: 3,
-    title: "Volunteers Needed for Tournament Day",
-    excerpt: "We're hosting the spring tournament on March 29th and need parent helpers for setup and refreshments.",
-    date: "10 Feb 2026",
-    category: "Events",
-  },
-];
+import { format } from "date-fns";
+import { usePublishedNews } from "@/hooks/use-news";
 
 export function NewsPreview() {
+  const { data: posts = [] } = usePublishedNews();
+  const latest = posts.slice(0, 3);
+
+  if (latest.length === 0) return null;
+
   return (
     <section id="news" className="py-20 bg-muted/50">
       <div className="container px-4">
@@ -48,25 +22,30 @@ export function NewsPreview() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {placeholderNews.map((item, index) => (
+          {latest.map((post, index) => (
             <article
-              key={item.id}
+              key={post.id}
               className="group bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="h-2 bg-primary" />
+              {post.cover_image_url ? (
+                <img
+                  src={post.cover_image_url}
+                  alt={post.title}
+                  className="w-full h-40 object-cover"
+                />
+              ) : (
+                <div className="h-2 bg-primary" />
+              )}
               <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-heading uppercase tracking-wider text-primary">
-                    {item.category}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{item.date}</span>
-                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {format(new Date(post.created_at), 'd MMM yyyy')}
+                </p>
                 <h3 className="font-heading text-lg uppercase text-foreground mb-2 leading-tight">
-                  {item.title}
+                  {post.title}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  {item.excerpt}
+                  {post.excerpt}
                 </p>
                 <Link
                   to="/news"

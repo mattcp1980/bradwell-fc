@@ -74,6 +74,55 @@ export interface Database {
           }
         ]
       }
+      news_posts: {
+        Row: {
+          id: string
+          title: string
+          excerpt: string
+          body: string
+          cover_image_url: string | null
+          images: string[]
+          status: 'draft' | 'published' | 'scheduled'
+          scheduled_at: string | null
+          author_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          excerpt?: string
+          body?: string
+          cover_image_url?: string | null
+          images?: string[]
+          status?: 'draft' | 'published' | 'scheduled'
+          scheduled_at?: string | null
+          author_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          excerpt?: string
+          body?: string
+          cover_image_url?: string | null
+          images?: string[]
+          status?: 'draft' | 'published' | 'scheduled'
+          scheduled_at?: string | null
+          author_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_posts_author_id_fkey"
+            columns: ["author_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           id: string
@@ -100,6 +149,7 @@ export interface Database {
     Functions: Record<string, never>
     Enums: {
       user_role: UserRole
+      news_post_status: 'draft' | 'published' | 'scheduled'
     }
   }
 }

@@ -22,13 +22,23 @@ export interface Player {
   position: string | null
 }
 
+export type NewsPostStatus = 'draft' | 'published' | 'scheduled'
+
 export interface NewsPost {
   id: string
   title: string
+  excerpt: string
   body: string
-  published_at: string
+  cover_image_url: string | null
+  images: string[]
+  status: NewsPostStatus
+  scheduled_at: string | null
   author_id: string
+  created_at: string
+  updated_at: string
 }
+
+export type NewsPostInput = Omit<NewsPost, 'id' | 'created_at' | 'updated_at'>
 
 export interface ClubOfficial {
   id: string
