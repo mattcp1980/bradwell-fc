@@ -46,7 +46,7 @@ jobs:
 
       - name: Invalidate CDN cache
         run: |
-          gcloud compute url-maps invalidate-cdn-cache site-url-map \
+          gcloud compute url-maps invalidate-cdn-cache site-url-map-af07ef1 \
             --path "/*" \
             --project bradwell-fc-prod \
             --async
