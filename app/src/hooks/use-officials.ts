@@ -39,6 +39,19 @@ export async function clearPrimaryContactForTeams(teams: string[], excludeId?: s
   if (error) throw error
 }
 
+// When an official is set as primary contact, update teams.primary_contact_id
+// for every team they belong to.
+async function syncTeamsPrimaryContact(officialId: string, teamNames: string[]) {
+  if (teamNames.length === 0) return
+
+  const { error } = await supabase
+    .from('teams')
+    .update({ primary_contact_id: officialId })
+    .in('name', teamNames)
+
+  if (error) throw error
+}
+
 export function useAddOfficial() {
   const queryClient = useQueryClient()
 
@@ -55,10 +68,17 @@ export function useAddOfficial() {
         .single()
 
       if (error) throw error
-      return data as ClubOfficial
+
+      const official = data as ClubOfficial
+      if (input.is_primary_contact && input.teams.length > 0) {
+        await syncTeamsPrimaryContact(official.id, input.teams)
+      }
+
+      return official
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
     },
   })
 }
@@ -80,10 +100,16 @@ export function useUpdateOfficial() {
         .single()
 
       if (error) throw error
+
+      if (input.is_primary_contact && input.teams.length > 0) {
+        await syncTeamsPrimaryContact(id, input.teams)
+      }
+
       return data as ClubOfficial
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: ['teams'] })
     },
   })
 }

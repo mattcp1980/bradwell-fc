@@ -18,14 +18,23 @@ const mockOverlaps = vi.fn()
 const mockOrder = vi.fn()
 const mockSingle = vi.fn()
 
+// Separate mock for teams table (used by syncTeamsPrimaryContact)
+const mockTeamsIn = vi.fn().mockResolvedValue({ error: null })
+const mockTeamsUpdate = vi.fn(() => ({ in: mockTeamsIn }))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
-    from: vi.fn(() => ({
-      select: mockSelect,
-      insert: mockInsert,
-      update: mockUpdate,
-      delete: mockDelete,
-    })),
+    from: vi.fn((table: string) => {
+      if (table === 'teams') {
+        return { update: mockTeamsUpdate }
+      }
+      return {
+        select: mockSelect,
+        insert: mockInsert,
+        update: mockUpdate,
+        delete: mockDelete,
+      }
+    }),
   },
 }))
 
