@@ -20,8 +20,8 @@ export function useOfficials() {
 }
 
 // When an official is marked as primary contact, clear the flag on any other
-// official that shares one of the same teams.
-async function clearPrimaryContactForTeams(teams: string[], excludeId?: string) {
+// official that shares one of the same teams. Exported for reuse in use-teams.ts.
+export async function clearPrimaryContactForTeams(teams: string[], excludeId?: string) {
   if (teams.length === 0) return
 
   let query = supabase

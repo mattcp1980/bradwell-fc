@@ -42,3 +42,18 @@ export interface ClubOfficial {
 }
 
 export type ClubOfficialInput = Omit<ClubOfficial, 'id' | 'created_at'>
+
+export interface Team {
+  id: string
+  name: string
+  age_group: string
+  primary_contact_id: string | null
+  created_at: string
+}
+
+export type TeamInput = Omit<Team, 'id' | 'created_at'>
+
+// Team row joined with primary contact details (from useTeams select)
+export interface TeamWithContact extends Team {
+  primary_contact: { id: string; full_name: string } | null
+}

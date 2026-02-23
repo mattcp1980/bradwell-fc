@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,10 +8,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { OfficialForm } from "@/components/shared/official-form";
+import { TeamForm } from "@/components/shared/team-form";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
-import type { ClubOfficial, ClubOfficialInput } from "@/types";
+import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
+import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact } from "@/types";
 
-type AdminSection = "news" | "training" | "documents" | "officials";
+type AdminSection = "news" | "training" | "documents" | "officials" | "teams";
 
 const placeholderNews = [
   { id: 1, title: "Cup Run Continues with Dominant Win", category: "Match Report", date: "18 Feb 2026", published: true },
@@ -38,8 +40,134 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
   { id: "news", label: "News", icon: Newspaper },
   { id: "training", label: "Training Timetable", icon: Calendar },
   { id: "documents", label: "Documents", icon: FileText },
+  { id: "teams", label: "Teams", icon: Shield },
   { id: "officials", label: "Club Officials", icon: Users },
 ];
+
+// ---------------------------------------------------------------------------
+// Teams section
+// ---------------------------------------------------------------------------
+
+function TeamsSection() {
+  const { data: teams = [], isLoading, error } = useTeams();
+  const addTeam = useAddTeam();
+  const updateTeam = useUpdateTeam();
+  const deleteTeam = useDeleteTeam();
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TeamWithContact | null>(null);
+
+  function handleAdd(input: TeamInput) {
+    addTeam.mutate(input, { onSuccess: () => setAddOpen(false) });
+  }
+
+  function handleUpdate(input: TeamInput) {
+    if (!editTarget) return;
+    updateTeam.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) });
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm("Delete this team? This cannot be undone.")) return;
+    deleteTeam.mutate(id);
+  }
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 className="font-heading text-base uppercase tracking-wider">Teams</h2>
+        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+          <Plus size={14} />
+          Add Team
+        </Button>
+      </div>
+
+      {isLoading && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      )}
+      {error && (
+        <p className="px-6 py-8 text-sm text-destructive text-center">
+          Failed to load teams. Please try again.
+        </p>
+      )}
+      {!isLoading && !error && teams.length === 0 && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+          No teams added yet. Click "Add Team" to get started.
+        </p>
+      )}
+      {!isLoading && !error && teams.length > 0 && (
+        <div className="divide-y divide-border">
+          {teams.map((team) => (
+            <div key={team.id} className="px-6 py-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm font-semibold text-foreground">{team.name}</span>
+                  <span className="text-xs bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                    {team.age_group}
+                  </span>
+                </div>
+                {team.primary_contact ? (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Star size={10} className="text-amber-500" />
+                    {team.primary_contact.full_name}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No primary contact set</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setEditTarget(team)}
+                >
+                  <Pencil size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDelete(team.id)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add team</DialogTitle>
+          </DialogHeader>
+          <TeamForm
+            onSubmit={handleAdd}
+            onCancel={() => setAddOpen(false)}
+            isPending={addTeam.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit team</DialogTitle>
+          </DialogHeader>
+          {editTarget && (
+            <TeamForm
+              defaultValues={editTarget}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditTarget(null)}
+              isPending={updateTeam.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Officials section
@@ -115,6 +243,7 @@ function OfficialGroup({
 
 function OfficialsSection() {
   const { data: officials = [], isLoading, error } = useOfficials();
+  const { data: teams = [] } = useTeams();
   const addOfficial = useAddOfficial();
   const updateOfficial = useUpdateOfficial();
   const deleteOfficial = useDeleteOfficial();
@@ -122,6 +251,7 @@ function OfficialsSection() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ClubOfficial | null>(null);
 
+  const teamNames = teams.map((t) => t.name);
   const admins = officials.filter((o) => o.role === "admin");
   const coaches = officials.filter((o) => o.role === "coach");
 
@@ -178,6 +308,7 @@ function OfficialsSection() {
             onSubmit={handleAdd}
             onCancel={() => setAddOpen(false)}
             isPending={addOfficial.isPending}
+            teams={teamNames}
           />
         </DialogContent>
       </Dialog>
@@ -193,6 +324,7 @@ function OfficialsSection() {
               onSubmit={handleUpdate}
               onCancel={() => setEditTarget(null)}
               isPending={updateOfficial.isPending}
+              teams={teamNames}
             />
           )}
         </DialogContent>
@@ -200,6 +332,10 @@ function OfficialsSection() {
     </section>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Main dashboard
+// ---------------------------------------------------------------------------
 
 export function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>("news");
@@ -209,7 +345,6 @@ export function AdminDashboard() {
       <div className="container px-4">
         <div className="max-w-5xl mx-auto">
 
-          {/* Page header */}
           <div className="mb-8">
             <p className="font-heading text-primary uppercase tracking-[0.2em] text-sm mb-1">
               Dashboard
@@ -300,8 +435,6 @@ export function AdminDashboard() {
                       Add Session
                     </Button>
                   </div>
-
-                  {/* Group by day */}
                   {days.map((day) => {
                     const sessions = placeholderTimetable.filter((s) => s.day === day);
                     if (sessions.length === 0) return null;
@@ -373,6 +506,9 @@ export function AdminDashboard() {
                   </div>
                 </section>
               )}
+
+              {/* Teams */}
+              {activeSection === "teams" && <TeamsSection />}
 
               {/* Officials */}
               {activeSection === "officials" && <OfficialsSection />}

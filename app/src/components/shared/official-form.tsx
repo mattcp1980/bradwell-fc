@@ -22,13 +22,6 @@ import {
 } from '@/components/ui/form'
 import type { ClubOfficial, ClubOfficialInput } from '@/types'
 
-export const TEAM_OPTIONS = [
-  'U10 Reds',
-  'U10 Blues',
-  'U12 Reds',
-  'Open Age First Team',
-] as const
-
 const officialSchema = z.object({
   full_name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Enter a valid email address'),
@@ -45,9 +38,10 @@ interface OfficialFormProps {
   onSubmit: (data: ClubOfficialInput) => void
   onCancel: () => void
   isPending: boolean
+  teams: string[]
 }
 
-export function OfficialForm({ defaultValues, onSubmit, onCancel, isPending }: OfficialFormProps) {
+export function OfficialForm({ defaultValues, onSubmit, onCancel, isPending, teams }: OfficialFormProps) {
   const form = useForm<OfficialFormValues>({
     resolver: zodResolver(officialSchema),
     defaultValues: {
@@ -149,7 +143,12 @@ export function OfficialForm({ defaultValues, onSubmit, onCancel, isPending }: O
             <FormItem>
               <FormLabel>Teams</FormLabel>
               <div className="grid grid-cols-2 gap-2 pt-1">
-                {TEAM_OPTIONS.map((team) => (
+                {teams.length === 0 && (
+                  <p className="col-span-2 text-xs text-muted-foreground">
+                    No teams set up yet. Add teams in the Teams section first.
+                  </p>
+                )}
+                {teams.map((team) => (
                   <label
                     key={team}
                     className="flex items-center gap-2 cursor-pointer text-sm"

@@ -43,6 +43,37 @@ export interface Database {
         }
         Relationships: []
       }
+      teams: {
+        Row: {
+          id: string
+          name: string
+          age_group: string
+          primary_contact_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          age_group: string
+          primary_contact_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          age_group?: string
+          primary_contact_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_primary_contact_id_fkey"
+            columns: ["primary_contact_id"]
+            referencedRelation: "club_officials"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           id: string
