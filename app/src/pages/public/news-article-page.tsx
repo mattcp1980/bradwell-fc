@@ -62,7 +62,7 @@ export function NewsArticlePage() {
             <img
               src={post.cover_image_url}
               alt={post.title}
-              className="w-full max-h-96 object-cover rounded-lg mb-8"
+              className="w-full rounded-lg mb-8"
             />
           )}
 
