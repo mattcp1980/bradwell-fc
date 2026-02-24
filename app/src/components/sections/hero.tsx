@@ -34,8 +34,8 @@ export function Hero() {
             Community football at its finest. Building young players, creating lasting memories.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-base" onClick={() => navigate("/fixtures")}>
-              View Fixtures
+            <Button size="lg" className="text-base" onClick={() => navigate("/portal")}>
+              Coach Portal
             </Button>
             <Button
               variant="ghost"
