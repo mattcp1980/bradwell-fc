@@ -26,6 +26,24 @@ export function usePublishedNews() {
   })
 }
 
+/** Single article by ID — used on the article detail page. */
+export function useNewsArticle(id: string | undefined) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, id],
+    enabled: !!id,
+    queryFn: async (): Promise<NewsPost | null> => {
+      if (!id) return null
+      const { data, error } = await supabase
+        .from('news_posts')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle()
+      if (error) return null
+      return data as NewsPost | null
+    },
+  })
+}
+
 /** Admin query — returns ALL articles regardless of status, newest first. */
 export function useAllNews() {
   return useQuery({

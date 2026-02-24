@@ -49,13 +49,13 @@ export function NewsPreview() {
                   {post.excerpt}
                 </p>
                 <Link
-                  to="/news"
+                  to={`/news/${post.id}`}
                   className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-royal-light transition-colors group-hover:gap-2"
                 >
                   Read more <ArrowRight size={14} />
                 </Link>
                 <div className="pt-3 mt-3 border-t border-border/50">
-                  <NewsShareButtons />
+                  <NewsShareButtons articleId={post.id} />
                 </div>
               </div>
             </article>

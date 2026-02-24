@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'lucide-react'
 
-const NEWS_URL = `${window.location.origin}/news`
-const FB_SHARE = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(NEWS_URL)}`
+type Props = { articleId?: string }
 
-export function NewsShareButtons() {
+export function NewsShareButtons({ articleId }: Props = {}) {
+  const shareUrl = articleId
+    ? `${window.location.origin}/news/${articleId}`
+    : `${window.location.origin}/news`
+  const fbShare = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
-    navigator.clipboard.writeText(NEWS_URL).then(() => {
+    navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
@@ -17,7 +21,7 @@ export function NewsShareButtons() {
   return (
     <div className="flex items-center gap-3">
       <a
-        href={FB_SHARE}
+        href={fbShare}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on Facebook"

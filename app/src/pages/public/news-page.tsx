@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import { usePublishedNews } from "@/hooks/use-news";
 import { NewsShareButtons } from "@/components/shared/news-share-buttons";
 
@@ -34,30 +35,32 @@ export function NewsPage() {
             {posts.map((post) => (
               <article
                 key={post.id}
-                className="group bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                className="group bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
-                {post.cover_image_url ? (
-                  <img
-                    src={post.cover_image_url}
-                    alt={post.title}
-                    className="w-full h-40 object-cover"
-                  />
-                ) : (
-                  <div className="h-2 bg-primary" />
-                )}
-                <div className="p-6">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    {format(new Date(post.created_at), 'd MMM yyyy')}
-                  </p>
-                  <h2 className="font-heading text-lg uppercase text-foreground mb-2 leading-tight">
-                    {post.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                    {post.excerpt}
-                  </p>
-                  <div className="pt-3 border-t border-border/50">
-                    <NewsShareButtons />
+                <Link to={`/news/${post.id}`} className="flex flex-col flex-1">
+                  {post.cover_image_url ? (
+                    <img
+                      src={post.cover_image_url}
+                      alt={post.title}
+                      className="w-full h-40 object-cover"
+                    />
+                  ) : (
+                    <div className="h-2 bg-primary" />
+                  )}
+                  <div className="p-6 flex-1">
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {format(new Date(post.created_at), 'd MMM yyyy')}
+                    </p>
+                    <h2 className="font-heading text-lg uppercase text-foreground mb-2 leading-tight">
+                      {post.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {post.excerpt}
+                    </p>
                   </div>
+                </Link>
+                <div className="px-6 pb-4 pt-3 border-t border-border/50">
+                  <NewsShareButtons articleId={post.id} />
                 </div>
               </article>
             ))}
