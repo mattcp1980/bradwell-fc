@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Mail, MapPin } from "lucide-react";
 import clubBadge from "@/assets/club-badge.jpg";
+import { useSiteContent } from "@/hooks/use-site-content";
 
 const quickLinks = [
   { label: "Fixtures", href: "/fixtures" },
@@ -10,6 +11,9 @@ const quickLinks = [
 ];
 
 export function Footer() {
+  const { data: content = {} } = useSiteContent();
+  const g = (key: string, fallback: string) => content[key] || fallback;
+
   return (
     <footer id="contact" className="bg-secondary text-secondary-foreground">
       <div className="container px-4 py-16">
@@ -22,7 +26,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-secondary-foreground/60 text-sm leading-relaxed">
-              A grassroots youth football club building players and community since 2000.
+              {g('footer_tagline', 'A grassroots youth football club building players and community since 2000.')}
             </p>
           </div>
 
@@ -49,15 +53,15 @@ export function Footer() {
             </h4>
             <div className="flex flex-col gap-3">
               <a
-                href="mailto:info@bradwellfc.co.uk"
+                href={`mailto:${g('contact_email', 'info@bradwellfc.co.uk')}`}
                 className="flex items-center gap-2 text-sm text-secondary-foreground/60 hover:text-primary transition-colors"
               >
                 <Mail size={14} />
-                info@bradwellfc.co.uk
+                {g('contact_email', 'info@bradwellfc.co.uk')}
               </a>
               <div className="flex items-center gap-2 text-sm text-secondary-foreground/60">
                 <MapPin size={14} />
-                Bradwell Park, Bradwell
+                {g('contact_address', 'Bradwell Park, Bradwell')}
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,11 +16,12 @@ import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } fr
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
 import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/use-documents";
+import { useSiteContent, useUpdateSiteContent } from "@/hooks/use-site-content";
 import { useAuth } from "@/hooks/use-auth";
 import { format } from "date-fns";
 import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput } from "@/types";
 
-type AdminSection = "news" | "training" | "documents" | "officials" | "teams";
+type AdminSection = "news" | "training" | "documents" | "officials" | "teams" | "site-content";
 
 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -37,6 +38,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
   { id: "documents", label: "Documents", icon: FileText },
   { id: "teams", label: "Teams", icon: Shield },
   { id: "officials", label: "Club Officials", icon: Users },
+  { id: "site-content", label: "Site Content", icon: LayoutTemplate },
 ];
 
 // ---------------------------------------------------------------------------
@@ -577,6 +579,156 @@ function DocumentsSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Site content section
+// ---------------------------------------------------------------------------
+
+type ContentFieldProps = {
+  label: string
+  contentKey: string
+  value: string
+  multiline?: boolean
+}
+
+function ContentField({ label, contentKey, value, multiline = false }: ContentFieldProps) {
+  const [draft, setDraft] = useState(value)
+  const [saved, setSaved] = useState(false)
+  const updateContent = useUpdateSiteContent()
+
+  // Sync draft when parent value changes (e.g. after refetch)
+  if (draft === '' && value !== '') {
+    setDraft(value)
+  }
+
+  function handleSave() {
+    updateContent.mutate({ key: contentKey, value: draft }, {
+      onSuccess: () => {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+      },
+    })
+  }
+
+  const isDirty = draft !== value
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-heading uppercase tracking-wider text-muted-foreground">
+        {label}
+      </label>
+      {multiline ? (
+        <textarea
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+          rows={3}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+      ) : (
+        <input
+          type="text"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+      )}
+      <div className="flex items-center justify-end gap-2">
+        {saved && (
+          <span className="text-xs text-green-600">Saved</span>
+        )}
+        <Button
+          size="sm"
+          variant={isDirty ? "default" : "outline"}
+          disabled={!isDirty || updateContent.isPending}
+          onClick={handleSave}
+          className="gap-1.5 h-7 text-xs"
+        >
+          {updateContent.isPending ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Save size={12} />
+          )}
+          Save
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function SiteContentSection() {
+  const { data: content = {}, isLoading } = useSiteContent()
+
+  if (isLoading) {
+    return (
+      <section className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-heading text-base uppercase tracking-wider">Site Content</h2>
+        </div>
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      </section>
+    )
+  }
+
+  const g = (key: string) => content[key] ?? ''
+
+  return (
+    <div className="flex flex-col gap-6">
+
+      {/* About section */}
+      <section className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-heading text-base uppercase tracking-wider">About Section</h2>
+          <p className="text-xs text-muted-foreground mt-1">Displayed on the home page "More Than A Club" section.</p>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-5">
+          <ContentField label="Heading" contentKey="about_heading" value={g('about_heading')} />
+          <ContentField label="First paragraph" contentKey="about_body_1" value={g('about_body_1')} multiline />
+          <ContentField label="Second paragraph" contentKey="about_body_2" value={g('about_body_2')} multiline />
+          <div className="border-t border-border pt-5">
+            <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground mb-4">Value Cards</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <ContentField label="Community" contentKey="about_value_community" value={g('about_value_community')} multiline />
+              <ContentField label="Development" contentKey="about_value_development" value={g('about_value_development')} multiline />
+              <ContentField label="Enjoyment" contentKey="about_value_enjoyment" value={g('about_value_enjoyment')} multiline />
+              <ContentField label="Respect" contentKey="about_value_respect" value={g('about_value_respect')} multiline />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Parents page */}
+      <section className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-heading text-base uppercase tracking-wider">Parents Page Cards</h2>
+          <p className="text-xs text-muted-foreground mt-1">Info cards shown on the Parents page.</p>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-5">
+          <ContentField label="Training Times" contentKey="parents_training_times" value={g('parents_training_times')} multiline />
+          <ContentField label="Venues" contentKey="parents_venues" value={g('parents_venues')} multiline />
+          <ContentField label="Safeguarding" contentKey="parents_safeguarding" value={g('parents_safeguarding')} multiline />
+          <ContentField label="Club Policies" contentKey="parents_club_policies" value={g('parents_club_policies')} multiline />
+          <ContentField label="Match Days" contentKey="parents_match_days" value={g('parents_match_days')} multiline />
+          <ContentField label="Get In Touch" contentKey="parents_get_in_touch" value={g('parents_get_in_touch')} multiline />
+          <ContentField label="Make a Payment URL" contentKey="parents_make_a_payment_url" value={g('parents_make_a_payment_url')} />
+        </div>
+      </section>
+
+      {/* Footer / contact */}
+      <section className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="font-heading text-base uppercase tracking-wider">Contact &amp; Footer</h2>
+          <p className="text-xs text-muted-foreground mt-1">Shown in the site footer and Parents page Get In Touch card.</p>
+        </div>
+        <div className="px-6 py-5 flex flex-col gap-5">
+          <ContentField label="Email address" contentKey="contact_email" value={g('contact_email')} />
+          <ContentField label="Address" contentKey="contact_address" value={g('contact_address')} />
+          <ContentField label="Footer tagline" contentKey="footer_tagline" value={g('footer_tagline')} multiline />
+        </div>
+      </section>
+
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main dashboard
 // ---------------------------------------------------------------------------
 
@@ -680,6 +832,9 @@ export function AdminDashboard() {
 
               {/* Officials */}
               {activeSection === "officials" && <OfficialsSection />}
+
+              {/* Site content */}
+              {activeSection === "site-content" && <SiteContentSection />}
 
             </div>
           </div>

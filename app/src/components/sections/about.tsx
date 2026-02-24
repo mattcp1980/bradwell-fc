@@ -1,29 +1,17 @@
 import { Users, Trophy, Heart, Shield } from "lucide-react";
+import { useSiteContent } from "@/hooks/use-site-content";
 
-const values = [
-  {
-    icon: Users,
-    title: "Community",
-    description: "Building friendships and teamwork both on and off the pitch.",
-  },
-  {
-    icon: Trophy,
-    title: "Development",
-    description: "Helping every player improve their skills and confidence.",
-  },
-  {
-    icon: Heart,
-    title: "Enjoyment",
-    description: "Making sure every child has fun and loves the game.",
-  },
-  {
-    icon: Shield,
-    title: "Respect",
-    description: "Fair play, sportsmanship, and respect for all.",
-  },
+const valueCards = [
+  { icon: Users, title: "Community", contentKey: "about_value_community" },
+  { icon: Trophy, title: "Development", contentKey: "about_value_development" },
+  { icon: Heart, title: "Enjoyment", contentKey: "about_value_enjoyment" },
+  { icon: Shield, title: "Respect", contentKey: "about_value_respect" },
 ];
 
 export function About() {
+  const { data: content = {} } = useSiteContent();
+  const g = (key: string, fallback: string) => content[key] || fallback;
+
   return (
     <section id="about" className="py-20 bg-background">
       <div className="container px-4">
@@ -34,34 +22,28 @@ export function About() {
                 About Us
               </p>
               <h2 className="text-4xl md:text-5xl text-foreground uppercase mb-6">
-                More Than
-                <br />
-                <span className="text-primary">A Club</span>
+                {g('about_heading', 'More Than A Club')}
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                Bradwell FC is a grassroots youth football club dedicated to
-                providing a safe, inclusive, and enjoyable environment for young
-                players to develop their football skills and grow as individuals.
+                {g('about_body_1', 'Bradwell FC is a grassroots youth football club dedicated to providing a safe, inclusive, and enjoyable environment for young players to develop their football skills and grow as individuals.')}
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                Run by FA-qualified volunteer coaches, we welcome players of all
-                abilities and are proud to be part of the local football
-                community.
+                {g('about_body_2', 'Run by FA-qualified volunteer coaches, we welcome players of all abilities and are proud to be part of the local football community.')}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {values.map((value) => (
+              {valueCards.map((card) => (
                 <div
-                  key={value.title}
+                  key={card.title}
                   className="bg-card border border-border rounded-lg p-5 hover:border-primary/30 transition-colors"
                 >
-                  <value.icon className="text-primary mb-3" size={28} />
+                  <card.icon className="text-primary mb-3" size={28} />
                   <h3 className="font-heading text-sm uppercase tracking-wider text-foreground mb-1">
-                    {value.title}
+                    {card.title}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    {value.description}
+                    {g(card.contentKey, '')}
                   </p>
                 </div>
               ))}

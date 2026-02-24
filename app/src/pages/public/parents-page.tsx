@@ -1,6 +1,12 @@
 import { Calendar, Clock, MapPin, Mail, FileText, ShieldCheck, CreditCard } from "lucide-react";
+import { useSiteContent } from "@/hooks/use-site-content";
 
 export function ParentsPage() {
+  const { data: content = {} } = useSiteContent();
+  const g = (key: string, fallback: string) => content[key] || fallback;
+
+  const paymentUrl = g('parents_make_a_payment_url', 'https://bradwell-fc.hivelink.co.uk/451/');
+
   return (
     <div className="pt-24 pb-20">
       <div className="container px-4">
@@ -18,7 +24,7 @@ export function ParentsPage() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
           <a
-            href="https://bradwell-fc.hivelink.co.uk/451/"
+            href={paymentUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-primary/10 border-2 border-primary rounded-lg p-6 hover:bg-primary/20 transition-colors group block"
@@ -37,7 +43,7 @@ export function ParentsPage() {
             <Calendar className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Training Times</h3>
             <p className="text-muted-foreground text-sm">
-              Training sessions run throughout the week across all age groups. Check with your team manager for specific days and times.
+              {g('parents_training_times', 'Training sessions run throughout the week across all age groups. Check with your team manager for specific days and times.')}
             </p>
           </div>
 
@@ -45,7 +51,7 @@ export function ParentsPage() {
             <MapPin className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Venues</h3>
             <p className="text-muted-foreground text-sm">
-              Home matches and training take place at Bradwell Park. Away fixture details are shared by team managers ahead of match day.
+              {g('parents_venues', 'Home matches and training take place at Bradwell Park. Away fixture details are shared by team managers ahead of match day.')}
             </p>
           </div>
 
@@ -53,7 +59,7 @@ export function ParentsPage() {
             <ShieldCheck className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Safeguarding</h3>
             <p className="text-muted-foreground text-sm">
-              The welfare of every child is our priority. All coaches are DBS checked and FA safeguarding trained. Contact our Welfare Officer with any concerns.
+              {g('parents_safeguarding', 'The welfare of every child is our priority. All coaches are DBS checked and FA safeguarding trained. Contact our Welfare Officer with any concerns.')}
             </p>
           </div>
 
@@ -61,7 +67,7 @@ export function ParentsPage() {
             <FileText className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Club Policies</h3>
             <p className="text-muted-foreground text-sm">
-              Our code of conduct, anti-bullying policy, and respect programme documents are available from your team manager or the club secretary.
+              {g('parents_club_policies', 'Our code of conduct, anti-bullying policy, and respect programme documents are available from your team manager or the club secretary.')}
             </p>
           </div>
 
@@ -69,7 +75,7 @@ export function ParentsPage() {
             <Clock className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Match Days</h3>
             <p className="text-muted-foreground text-sm">
-              Please arrive 15 minutes before kick-off. Ensure your child has shin pads, boots, and their kit. We encourage positive touchline behaviour from all supporters.
+              {g('parents_match_days', 'Please arrive 15 minutes before kick-off. Ensure your child has shin pads, boots, and their kit. We encourage positive touchline behaviour from all supporters.')}
             </p>
           </div>
 
@@ -77,7 +83,7 @@ export function ParentsPage() {
             <Mail className="text-primary mb-3" size={28} />
             <h3 className="font-heading text-lg uppercase text-foreground mb-2">Get In Touch</h3>
             <p className="text-muted-foreground text-sm">
-              Questions? Reach out to your team manager directly, or contact the club via our social media channels or email.
+              {g('parents_get_in_touch', 'Questions? Reach out to your team manager directly, or contact the club via our social media channels or email.')}
             </p>
           </div>
         </div>

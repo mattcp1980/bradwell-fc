@@ -82,3 +82,12 @@ export interface Document {
 }
 
 export type DocumentInput = Omit<Document, 'id' | 'created_at'>
+
+export interface SiteContent {
+  key: string
+  value: string
+  updated_at: string
+}
+
+/** Map of all site content keys to their values, for easy lookup. */
+export type SiteContentMap = Record<string, string>
