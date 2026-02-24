@@ -132,6 +132,8 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
   const upsert = useUpsertSlot()
   const deleteSlot = useDeleteSlot()
   const [dragOver, setDragOver] = useState(false)
+  const [editingVenue, setEditingVenue] = useState(false)
+  const [venueDraft, setVenueDraft] = useState(slot.venue)
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -164,13 +166,53 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
     deleteSlot.mutate({ id: slot.id, schedule_id: slot.schedule_id })
   }
 
+  function saveVenue() {
+    const trimmed = venueDraft.trim()
+    if (trimmed !== slot.venue) {
+      upsert.mutate({
+        id: slot.id,
+        schedule_id: slot.schedule_id,
+        day: slot.day,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+        venue: trimmed,
+        team_id: slot.team_id,
+      })
+    }
+    setEditingVenue(false)
+  }
+
   return (
     <tr className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
       <td className="px-3 py-2 text-xs text-muted-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>{slot.day}</td>
       <td className="px-3 py-2 text-xs font-mono text-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>
         {slot.start_time} – {slot.end_time}
       </td>
-      <td className="px-3 py-2 text-xs text-muted-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>{slot.venue || '—'}</td>
+      <td className="px-3 py-2 text-xs text-muted-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>
+        {editingVenue ? (
+          <input
+            autoFocus
+            type="text"
+            value={venueDraft}
+            onChange={(e) => setVenueDraft(e.target.value)}
+            onBlur={saveVenue}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveVenue()
+              if (e.key === 'Escape') { setVenueDraft(slot.venue); setEditingVenue(false) }
+            }}
+            className="rounded border border-primary px-2 py-0.5 text-xs w-full focus:outline-none"
+          />
+        ) : (
+          <button
+            onClick={() => { setVenueDraft(slot.venue); setEditingVenue(true) }}
+            className="text-left hover:text-foreground transition-colors group flex items-center gap-1"
+            title="Click to edit venue"
+          >
+            {slot.venue || <span className="italic text-muted-foreground/40">—</span>}
+            <Pencil size={10} className="opacity-0 group-hover:opacity-50 transition-opacity shrink-0" />
+          </button>
+        )}
+      </td>
       <td
         className={`px-3 py-2 transition-colors ${dragOver ? 'bg-primary/10' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
