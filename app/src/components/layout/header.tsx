@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import clubBadge from "@/assets/club-badge.jpg";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -14,6 +15,11 @@ const navItems = [
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, role } = useAuth();
+
+  // When already authenticated, go straight to the destination
+  const handleCoach = () => navigate(user ? "/portal" : "/login?type=coach");
+  const handleAdmin = () => navigate(user ? "/admin" : "/login?type=admin");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-dark-light/50">
@@ -35,18 +41,21 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
-            onClick={() => navigate("/login?type=coach")}
-          >
-            Coach
-          </Button>
+          {/* Only show Coach button if not admin (admin already has Admin button) */}
+          {role !== 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+              onClick={handleCoach}
+            >
+              Coach
+            </Button>
+          )}
           <Button
             size="sm"
             className="ml-2"
-            onClick={() => navigate("/login?type=admin")}
+            onClick={handleAdmin}
           >
             Admin
           </Button>
@@ -74,18 +83,20 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
-              onClick={() => { setMobileOpen(false); navigate("/login?type=coach"); }}
-            >
-              Coach
-            </Button>
+            {role !== 'admin' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+                onClick={() => { setMobileOpen(false); handleCoach(); }}
+              >
+                Coach
+              </Button>
+            )}
             <Button
               size="sm"
               className="mt-2 w-fit"
-              onClick={() => { setMobileOpen(false); navigate("/login?type=admin"); }}
+              onClick={() => { setMobileOpen(false); handleAdmin(); }}
             >
               Admin
             </Button>
