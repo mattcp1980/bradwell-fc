@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { usePublishedNews } from "@/hooks/use-news";
+import { NewsShareButtons } from "@/components/shared/news-share-buttons";
 
 export function NewsPreview() {
   const { data: posts = [] } = usePublishedNews();
@@ -53,6 +54,9 @@ export function NewsPreview() {
                 >
                   Read more <ArrowRight size={14} />
                 </Link>
+                <div className="pt-3 mt-3 border-t border-border/50">
+                  <NewsShareButtons />
+                </div>
               </div>
             </article>
           ))}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,6 +62,7 @@ function NewsSection() {
 
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<NewsPost | null>(null);
+  const [cloneSource, setCloneSource] = useState<NewsPost | null>(null);
 
   const authorId = user?.id ?? '';
 
@@ -74,10 +75,19 @@ function NewsSection() {
     updateNews.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) });
   }
 
+  function handleClone(input: NewsPostInput, clientId: string) {
+    addNews.mutate({ ...input, id: clientId }, { onSuccess: () => setCloneSource(null) });
+  }
+
   function handleDelete(id: string) {
     if (!confirm("Delete this article? This cannot be undone.")) return;
     deleteNews.mutate(id);
   }
+
+  // Build a synthetic NewsPost for the clone dialog — fresh ID, draft status, prefixed title
+  const cloneDefaults: NewsPost | undefined = cloneSource
+    ? { ...cloneSource, id: crypto.randomUUID(), title: `Copy of ${cloneSource.title}`, status: 'draft', scheduled_at: null }
+    : undefined;
 
   return (
     <section className="bg-card border border-border rounded-lg overflow-hidden">
@@ -116,6 +126,15 @@ function NewsSection() {
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Duplicate"
+                  onClick={() => setCloneSource(post)}
+                >
+                  <Copy size={14} />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -166,6 +185,24 @@ function NewsSection() {
               onSubmit={(input) => handleUpdate(input)}
               onCancel={() => setEditTarget(null)}
               isPending={updateNews.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!cloneSource} onOpenChange={(open) => { if (!open) setCloneSource(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Duplicate article</DialogTitle>
+            <DialogDescription>A copy has been pre-filled below — edit as needed before saving.</DialogDescription>
+          </DialogHeader>
+          {cloneDefaults && (
+            <NewsForm
+              defaultValues={cloneDefaults}
+              authorId={authorId}
+              onSubmit={handleClone}
+              onCancel={() => setCloneSource(null)}
+              isPending={addNews.isPending}
             />
           )}
         </DialogContent>
@@ -641,6 +678,7 @@ function EventsSection() {
 
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<ClubEvent | null>(null)
+  const [cloneSource, setCloneSource] = useState<ClubEvent | null>(null)
 
   const createdBy = user?.id ?? ''
 
@@ -653,10 +691,18 @@ function EventsSection() {
     updateEvent.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) })
   }
 
+  function handleClone(input: ClubEventInput) {
+    addEvent.mutate(input, { onSuccess: () => setCloneSource(null) })
+  }
+
   function handleDelete(id: string) {
     if (!confirm('Delete this event? This cannot be undone.')) return
     deleteEvent.mutate(id)
   }
+
+  const cloneDefaults: ClubEvent | undefined = cloneSource
+    ? { ...cloneSource, id: crypto.randomUUID(), title: `Copy of ${cloneSource.title}`, status: 'draft' }
+    : undefined
 
   return (
     <section className="bg-card border border-border rounded-lg overflow-hidden">
@@ -697,6 +743,15 @@ function EventsSection() {
                 </p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Duplicate"
+                  onClick={() => setCloneSource(event)}
+                >
+                  <Copy size={14} />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -747,6 +802,24 @@ function EventsSection() {
               onSubmit={handleUpdate}
               onCancel={() => setEditTarget(null)}
               isPending={updateEvent.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!cloneSource} onOpenChange={(open) => { if (!open) setCloneSource(null) }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Duplicate event</DialogTitle>
+            <DialogDescription>A copy has been pre-filled below — edit as needed before saving.</DialogDescription>
+          </DialogHeader>
+          {cloneDefaults && (
+            <EventForm
+              defaultValues={cloneDefaults}
+              createdBy={createdBy}
+              onSubmit={handleClone}
+              onCancel={() => setCloneSource(null)}
+              isPending={addEvent.isPending}
             />
           )}
         </DialogContent>
@@ -898,6 +971,8 @@ function SiteContentSection() {
           <ContentField label="Email address" contentKey="contact_email" value={g('contact_email')} />
           <ContentField label="Address" contentKey="contact_address" value={g('contact_address')} />
           <ContentField label="Footer tagline" contentKey="footer_tagline" value={g('footer_tagline')} multiline />
+          <ContentField label="Facebook page URL" contentKey="social_facebook" value={g('social_facebook')} />
+          <ContentField label="Instagram profile URL" contentKey="social_instagram" value={g('social_instagram')} />
         </div>
       </section>
 

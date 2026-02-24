@@ -14,7 +14,7 @@
 import { useState, useRef } from 'react'
 import {
   Plus, Trash2, Image, ChevronDown, ChevronUp,
-  CheckCircle, Clock, Pencil, X, Loader2,
+  CheckCircle, Clock, Pencil, X, Loader2, Copy,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTeams } from '@/hooks/use-teams'
@@ -23,6 +23,7 @@ import {
   useAddTrainingSchedule,
   useUpdateTrainingSchedule,
   useDeleteTrainingSchedule,
+  useCloneTrainingSchedule,
   useTrainingSlots,
   useUpsertSlot,
   useDeleteSlot,
@@ -406,6 +407,7 @@ export function TrainingScheduleBuilder() {
   const addSchedule = useAddTrainingSchedule()
   const updateSchedule = useUpdateTrainingSchedule()
   const deleteSchedule = useDeleteTrainingSchedule()
+  const cloneSchedule = useCloneTrainingSchedule()
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
@@ -512,6 +514,16 @@ export function TrainingScheduleBuilder() {
                 <StatusBadge status={schedule.status} />
               </button>
               <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => cloneSchedule.mutate(schedule, { onSuccess: (s) => setExpandedId(s.id) })}
+                  disabled={cloneSchedule.isPending}
+                  title="Duplicate"
+                >
+                  {cloneSchedule.isPending ? <Loader2 size={13} className="animate-spin" /> : <Copy size={13} />}
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

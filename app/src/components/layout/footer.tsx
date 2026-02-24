@@ -12,7 +12,9 @@ const quickLinks = [
 
 export function Footer() {
   const { data: content = {} } = useSiteContent();
-  const g = (key: string, fallback: string) => content[key] || fallback;
+  const g = (key: string, fallback = '') => content[key] || fallback;
+  const facebookUrl = g('social_facebook')
+  const instagramUrl = g('social_instagram')
 
   return (
     <footer id="contact" className="bg-secondary text-secondary-foreground">
@@ -63,6 +65,38 @@ export function Footer() {
                 <MapPin size={14} />
                 {g('contact_address', 'Bradwell Park, Bradwell')}
               </div>
+              {(facebookUrl || instagramUrl) && (
+                <div className="flex items-center gap-3 pt-1">
+                  {facebookUrl && (
+                    <a
+                      href={facebookUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Bradwell FC on Facebook"
+                      className="text-secondary-foreground/60 hover:text-primary transition-colors"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                      </svg>
+                    </a>
+                  )}
+                  {instagramUrl && (
+                    <a
+                      href={instagramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Bradwell FC on Instagram"
+                      className="text-secondary-foreground/60 hover:text-primary transition-colors"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                        <circle cx="12" cy="12" r="4" />
+                        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

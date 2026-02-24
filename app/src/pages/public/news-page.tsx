@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { usePublishedNews } from "@/hooks/use-news";
+import { NewsShareButtons } from "@/components/shared/news-share-buttons";
 
 export function NewsPage() {
   const { data: posts = [], isLoading } = usePublishedNews();
@@ -51,9 +52,12 @@ export function NewsPage() {
                   <h2 className="font-heading text-lg uppercase text-foreground mb-2 leading-tight">
                     {post.title}
                   </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                     {post.excerpt}
                   </p>
+                  <div className="pt-3 border-t border-border/50">
+                    <NewsShareButtons />
+                  </div>
                 </div>
               </article>
             ))}

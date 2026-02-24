@@ -129,6 +129,42 @@ export function useUpdateTrainingSchedule() {
   })
 }
 
+export function useCloneTrainingSchedule() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (source: TrainingSchedule): Promise<TrainingSchedule> => {
+      // 1. Create new draft schedule
+      const { data: newSchedule, error: scheduleError } = await supabase
+        .from('training_schedules')
+        .insert({ name: `Copy of ${source.name}`, status: 'draft' })
+        .select()
+        .single()
+      if (scheduleError) throw scheduleError
+
+      // 2. Fetch source slots
+      const { data: sourceSlots, error: slotsError } = await supabase
+        .from('training_slots')
+        .select('day, start_time, end_time, venue, team_id')
+        .eq('schedule_id', source.id)
+      if (slotsError) throw slotsError
+
+      // 3. Bulk-insert cloned slots
+      if (sourceSlots && sourceSlots.length > 0) {
+        const { error: insertError } = await supabase
+          .from('training_slots')
+          .insert(sourceSlots.map((s) => ({ ...s, schedule_id: (newSchedule as TrainingSchedule).id })))
+        if (insertError) throw insertError
+      }
+
+      return newSchedule as TrainingSchedule
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: SCHEDULE_KEY })
+      queryClient.invalidateQueries({ queryKey: SLOTS_KEY })
+    },
+  })
+}
+
 export function useDeleteTrainingSchedule() {
   const queryClient = useQueryClient()
   return useMutation({
