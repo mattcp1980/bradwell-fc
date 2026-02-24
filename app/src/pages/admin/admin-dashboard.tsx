@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -180,12 +180,24 @@ function NewsSection() {
 
 function TeamsSection() {
   const { data: teams = [], isLoading } = useTeams();
+  const { data: officials = [] } = useOfficials();
   const addTeam = useAddTeam();
   const updateTeam = useUpdateTeam();
   const deleteTeam = useDeleteTeam();
 
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TeamWithContact | null>(null);
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
+  // Build a map of team name → all assigned coaches (non-primary included)
+  const coachesByTeam = new Map<string, ClubOfficial[]>();
+  for (const official of officials) {
+    for (const teamName of official.teams) {
+      const list = coachesByTeam.get(teamName) ?? [];
+      list.push(official);
+      coachesByTeam.set(teamName, list);
+    }
+  }
 
   function handleAdd(input: TeamInput) {
     addTeam.mutate(input, { onSuccess: () => setAddOpen(false) });
@@ -221,44 +233,79 @@ function TeamsSection() {
       )}
       {!isLoading && teams.length > 0 && (
         <div className="divide-y divide-border">
-          {teams.map((team) => (
-            <div key={team.id} className="px-6 py-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-semibold text-foreground">{team.name}</span>
-                  <span className="text-xs bg-muted text-muted-foreground rounded px-1.5 py-0.5">
-                    {team.age_group}
-                  </span>
+          {teams.map((team) => {
+            const isExpanded = expandedTeamId === team.id;
+            const allCoaches = coachesByTeam.get(team.name) ?? [];
+            return (
+              <div key={team.id}>
+                <div className="px-6 py-4 flex items-center justify-between gap-4">
+                  <button
+                    className="min-w-0 text-left flex-1"
+                    onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-foreground">{team.name}</span>
+                      <span className="text-xs bg-muted text-muted-foreground rounded px-1.5 py-0.5">
+                        {team.age_group}
+                      </span>
+                      {allCoaches.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </span>
+                      )}
+                    </div>
+                    {team.primary_contact ? (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Star size={10} className="text-amber-500" />
+                        {team.primary_contact.full_name}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No primary contact set</p>
+                    )}
+                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => setEditTarget(team)}
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDelete(team.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
                 </div>
-                {team.primary_contact ? (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Star size={10} className="text-amber-500" />
-                    {team.primary_contact.full_name}
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No primary contact set</p>
+                {isExpanded && (
+                  <div className="px-6 pb-4 border-t border-border pt-3 bg-muted/20">
+                    <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground mb-2">All coaches</p>
+                    {allCoaches.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No coaches assigned.</p>
+                    ) : (
+                      <div className="flex flex-col gap-1">
+                        {allCoaches.map((coach) => (
+                          <div key={coach.id} className="flex items-center gap-2 text-xs text-foreground">
+                            {coach.id === team.primary_contact?.id
+                              ? <Star size={10} className="text-amber-500 shrink-0" />
+                              : <span className="w-2.5 shrink-0" />
+                            }
+                            <span>{coach.full_name}</span>
+                            <span className="text-muted-foreground">{coach.email}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={() => setEditTarget(team)}
-                >
-                  <Pencil size={14} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => handleDelete(team.id)}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

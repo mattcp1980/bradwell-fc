@@ -7,13 +7,14 @@ import { TrainingScheduleView } from "@/components/shared/training-schedule-view
 import { useRequiredEvents } from "@/hooks/use-events";
 
 export function ParentDashboard() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const { data: myTeamIds } = useMyTeamIds(user?.email);
   const { data: documents = [], isLoading: docsLoading } = useCoachDocuments();
   const { data: requiredEvents = [], isLoading: eventsLoading } = useRequiredEvents();
 
-  // Admins see the full schedule; coaches see only their assigned teams
-  const scheduleTeamIds = role === 'admin' ? undefined : (myTeamIds ?? []);
+  // Everyone sees only the teams they are personally assigned to.
+  // myTeamIds is undefined while loading, [] once resolved with no assignments.
+  const scheduleTeamIds = myTeamIds ?? [];
 
   return (
     <div className="pt-24 pb-20">
