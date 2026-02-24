@@ -105,14 +105,14 @@ function AddSlotRow({
           type="text"
           value={venue}
           onChange={(e) => setVenue(e.target.value)}
-          placeholder="e.g. Bradwell Park, Pitch 1"
-          className="rounded border border-border bg-background px-2 py-1 text-xs w-full"
+          placeholder="e.g. Bradwell Park, Pitch 1 *"
+          className={`rounded border bg-background px-2 py-1 text-xs w-full ${venue.trim() ? 'border-border' : 'border-destructive/60'}`}
         />
       </td>
       <td className="px-3 py-2 text-muted-foreground text-xs italic">Drag a team in</td>
       <td className="px-3 py-2">
         <div className="flex gap-1">
-          <Button size="sm" className="h-7 text-xs gap-1" onClick={handleAdd} disabled={upsert.isPending}>
+          <Button size="sm" className="h-7 text-xs gap-1" onClick={handleAdd} disabled={upsert.isPending || !venue.trim()}>
             {upsert.isPending ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
             Add
           </Button>

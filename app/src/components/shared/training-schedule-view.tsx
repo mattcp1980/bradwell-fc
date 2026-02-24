@@ -18,9 +18,10 @@ type Props = {
   filterTeamId?: string | null
   teamDropdown?: boolean
   myTeamIds?: string[]
+  hideUnassigned?: boolean
 }
 
-export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdown = false, myTeamIds }: Props) {
+export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdown = false, myTeamIds, hideUnassigned = false }: Props) {
   const { data: schedule, isLoading: scheduleLoading } = usePublishedSchedule()
   const { data: allSlots = [], isLoading: slotsLoading } = useTrainingSlots(schedule?.id ?? null)
 
@@ -32,9 +33,10 @@ export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdow
   const activeFilter = externalFilter !== undefined ? externalFilter : (selectedTeamId || null)
 
   // If myTeamIds is provided, narrow down to only those slots
-  const visibleSlots = myTeamIds
-    ? allSlots.filter((s) => s.team_id && myTeamIds.includes(s.team_id))
-    : allSlots
+  // Always exclude unassigned slots when hideUnassigned is set
+  const visibleSlots = allSlots
+    .filter((s) => !hideUnassigned || s.team_id !== null)
+    .filter((s) => !myTeamIds || (s.team_id && myTeamIds.includes(s.team_id)))
 
   // Collect unique teams from visible slots for the dropdown
   const teamsInSchedule = Array.from(

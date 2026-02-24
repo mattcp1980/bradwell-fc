@@ -62,7 +62,7 @@ export function ParentsPage() {
             </button>
             {scheduleOpen && (
               <div className="px-6 pb-6 border-t border-border pt-4">
-                <TrainingScheduleView teamDropdown />
+                <TrainingScheduleView teamDropdown hideUnassigned />
               </div>
             )}
           </div>
