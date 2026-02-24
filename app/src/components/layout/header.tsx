@@ -17,9 +17,130 @@ export function Header() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
 
-  // When already authenticated, go straight to the destination
-  const handleCoach = () => navigate(user ? "/portal" : "/login?type=coach");
-  const handleAdmin = () => navigate(user ? "/admin" : "/login?type=admin");
+  const authButtons = () => {
+    if (!user) {
+      // Unauthenticated — show login buttons for both portals
+      return (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => navigate("/login?type=coach")}
+          >
+            Coach
+          </Button>
+          <Button
+            size="sm"
+            className="ml-2"
+            onClick={() => navigate("/login?type=admin")}
+          >
+            Admin
+          </Button>
+        </>
+      )
+    }
+
+    if (role === 'admin') {
+      // Admin — direct links to both areas
+      return (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => navigate("/portal")}
+          >
+            Portal
+          </Button>
+          <Button
+            size="sm"
+            className="ml-2"
+            onClick={() => navigate("/admin")}
+          >
+            Admin
+          </Button>
+        </>
+      )
+    }
+
+    if (role === 'coach') {
+      // Coach — direct link to portal only
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+          onClick={() => navigate("/portal")}
+        >
+          Portal
+        </Button>
+      )
+    }
+
+    return null
+  }
+
+  const mobileAuthButtons = () => {
+    if (!user) {
+      return (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => { setMobileOpen(false); navigate("/login?type=coach"); }}
+          >
+            Coach
+          </Button>
+          <Button
+            size="sm"
+            className="mt-2 w-fit"
+            onClick={() => { setMobileOpen(false); navigate("/login?type=admin"); }}
+          >
+            Admin
+          </Button>
+        </>
+      )
+    }
+
+    if (role === 'admin') {
+      return (
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => { setMobileOpen(false); navigate("/portal"); }}
+          >
+            Portal
+          </Button>
+          <Button
+            size="sm"
+            className="mt-2 w-fit"
+            onClick={() => { setMobileOpen(false); navigate("/admin"); }}
+          >
+            Admin
+          </Button>
+        </>
+      )
+    }
+
+    if (role === 'coach') {
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+          onClick={() => { setMobileOpen(false); navigate("/portal"); }}
+        >
+          Portal
+        </Button>
+      )
+    }
+
+    return null
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-secondary/95 backdrop-blur-sm border-b border-dark-light/50">
@@ -41,24 +162,7 @@ export function Header() {
               {item.label}
             </Link>
           ))}
-          {/* Only show Coach button if not admin (admin already has Admin button) */}
-          {role !== 'admin' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
-              onClick={handleCoach}
-            >
-              Coach
-            </Button>
-          )}
-          <Button
-            size="sm"
-            className="ml-2"
-            onClick={handleAdmin}
-          >
-            Admin
-          </Button>
+          {authButtons()}
         </nav>
 
         <button
@@ -83,23 +187,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            {role !== 'admin' && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
-                onClick={() => { setMobileOpen(false); handleCoach(); }}
-              >
-                Coach
-              </Button>
-            )}
-            <Button
-              size="sm"
-              className="mt-2 w-fit"
-              onClick={() => { setMobileOpen(false); handleAdmin(); }}
-            >
-              Admin
-            </Button>
+            {mobileAuthButtons()}
           </nav>
         </div>
       )}
