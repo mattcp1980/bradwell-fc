@@ -12,6 +12,7 @@ import { OfficialForm } from "@/components/shared/official-form";
 import { TeamForm } from "@/components/shared/team-form";
 import { NewsForm } from "@/components/shared/news-form";
 import { DocumentForm } from "@/components/shared/document-form";
+import { TrainingScheduleBuilder } from "@/components/shared/training-schedule-builder";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
 import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
@@ -23,14 +24,6 @@ import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsP
 
 type AdminSection = "news" | "training" | "documents" | "officials" | "teams" | "site-content";
 
-const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-const placeholderTimetable = [
-  { id: 1, team: "U10 Reds", day: "Tuesday", time: "18:00", venue: "Bradwell Park, Pitch 1" },
-  { id: 2, team: "U10 Blues", day: "Thursday", time: "18:00", venue: "Bradwell Park, Pitch 2" },
-  { id: 3, team: "U12 Reds", day: "Wednesday", time: "18:30", venue: "Bradwell Park, Pitch 1" },
-  { id: 4, team: "Open Age First Team", day: "Tuesday", time: "19:30", venue: "Bradwell Park, Pitch 1" },
-];
 
 const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = [
   { id: "news", label: "News", icon: Newspaper },
@@ -783,44 +776,12 @@ export function AdminDashboard() {
               {/* Training timetable */}
               {activeSection === "training" && (
                 <section className="bg-card border border-border rounded-lg overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                    <h2 className="font-heading text-base uppercase tracking-wider">Training Timetable</h2>
-                    <Button size="sm" className="gap-1.5">
-                      <Plus size={14} />
-                      Add Session
-                    </Button>
+                  <div className="px-6 py-4 border-b border-border">
+                    <h2 className="font-heading text-base uppercase tracking-wider">Training Schedule</h2>
                   </div>
-                  {days.map((day) => {
-                    const sessions = placeholderTimetable.filter((s) => s.day === day);
-                    if (sessions.length === 0) return null;
-                    return (
-                      <div key={day} className="border-b border-border last:border-0">
-                        <div className="px-6 py-2 bg-muted/30">
-                          <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground">
-                            {day}
-                          </p>
-                        </div>
-                        {sessions.map((session) => (
-                          <div key={session.id} className="px-6 py-3 flex items-center justify-between gap-4">
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">{session.team}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {session.time} · {session.venue}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                <Pencil size={14} />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                                <Trash2 size={14} />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
+                  <div className="px-6 py-5">
+                    <TrainingScheduleBuilder />
+                  </div>
                 </section>
               )}
 

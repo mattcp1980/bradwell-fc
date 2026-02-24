@@ -83,6 +83,34 @@ export interface Document {
 
 export type DocumentInput = Omit<Document, 'id' | 'created_at'>
 
+export type TrainingDay = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+
+export interface TrainingSchedule {
+  id: string
+  name: string
+  status: 'draft' | 'published'
+  pitch_image_url: string | null
+  pitch_image_path: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TrainingSlot {
+  id: string
+  schedule_id: string
+  day: TrainingDay
+  start_time: string
+  end_time: string
+  venue: string
+  team_id: string | null
+  created_at: string
+}
+
+/** A slot with the joined team name, for display */
+export interface TrainingSlotWithTeam extends TrainingSlot {
+  team: { id: string; name: string } | null
+}
+
 export interface SiteContent {
   key: string
   value: string

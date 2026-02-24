@@ -1,9 +1,12 @@
-import { Calendar, Clock, MapPin, Mail, FileText, ShieldCheck, CreditCard } from "lucide-react";
+import { useState } from "react";
+import { Calendar, Clock, MapPin, Mail, FileText, ShieldCheck, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import { useSiteContent } from "@/hooks/use-site-content";
+import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
 
 export function ParentsPage() {
   const { data: content = {} } = useSiteContent();
   const g = (key: string, fallback: string) => content[key] || fallback;
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const paymentUrl = g('parents_make_a_payment_url', 'https://bradwell-fc.hivelink.co.uk/451/');
 
@@ -39,12 +42,29 @@ export function ParentsPage() {
             </span>
           </a>
 
-          <div className="bg-card border border-border rounded-lg p-6">
-            <Calendar className="text-primary mb-3" size={28} />
-            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Training Times</h3>
-            <p className="text-muted-foreground text-sm">
-              {g('parents_training_times', 'Training sessions run throughout the week across all age groups. Check with your team manager for specific days and times.')}
-            </p>
+          <div
+            className={`bg-card border border-border rounded-lg transition-all ${scheduleOpen ? 'md:col-span-2 lg:col-span-3' : ''}`}
+          >
+            <button
+              onClick={() => setScheduleOpen((o) => !o)}
+              className="w-full text-left p-6 flex items-start justify-between gap-4 group"
+            >
+              <div>
+                <Calendar className="text-primary mb-3" size={28} />
+                <h3 className="font-heading text-lg uppercase text-foreground mb-2">Training Times</h3>
+                <p className="text-muted-foreground text-sm">
+                  {g('parents_training_times', 'Training sessions run throughout the week across all age groups. Click to view the full schedule.')}
+                </p>
+              </div>
+              <span className="text-primary mt-1 shrink-0">
+                {scheduleOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </span>
+            </button>
+            {scheduleOpen && (
+              <div className="px-6 pb-6 border-t border-border pt-4">
+                <TrainingScheduleView teamDropdown />
+              </div>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-lg p-6">

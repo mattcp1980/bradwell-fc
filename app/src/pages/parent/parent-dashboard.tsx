@@ -1,15 +1,17 @@
 import { ExternalLink, FileText, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { useCoachDocuments } from "@/hooks/use-documents";
-
-const placeholderSchedule = [
-  { team: "U10 Reds", day: "Tuesday", time: "18:00", venue: "Bradwell Park, Pitch 1" },
-  { team: "U10 Blues", day: "Thursday", time: "18:00", venue: "Bradwell Park, Pitch 2" },
-  { team: "U12 Reds", day: "Wednesday", time: "18:30", venue: "Bradwell Park, Pitch 1" },
-];
+import { useAuth } from "@/hooks/use-auth";
+import { useMyTeamIds } from "@/hooks/use-officials";
+import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
 
 export function ParentDashboard() {
+  const { user, role } = useAuth();
+  const { data: myTeamIds } = useMyTeamIds(user?.email);
   const { data: documents = [], isLoading: docsLoading } = useCoachDocuments();
+
+  // Admins see the full schedule; coaches see only their assigned teams
+  const scheduleTeamIds = role === 'admin' ? undefined : (myTeamIds ?? []);
 
   return (
     <div className="pt-24 pb-20">
@@ -33,30 +35,14 @@ export function ParentDashboard() {
 
               {/* Training schedule */}
               <section className="bg-card border border-border rounded-lg overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="text-primary" size={18} />
-                    <h2 className="font-heading text-base uppercase tracking-wider">
-                      Training Schedule
-                    </h2>
-                  </div>
+                <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+                  <Calendar className="text-primary" size={18} />
+                  <h2 className="font-heading text-base uppercase tracking-wider">
+                    Training Schedule
+                  </h2>
                 </div>
-                <div className="divide-y divide-border">
-                  {placeholderSchedule.map((session) => (
-                    <div key={session.team} className="px-6 py-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-sm text-foreground">{session.team}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {session.day} · {session.time} · {session.venue}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {placeholderSchedule.length === 0 && (
-                    <p className="px-6 py-8 text-sm text-muted-foreground text-center">
-                      No training sessions scheduled yet.
-                    </p>
-                  )}
+                <div className="px-6 py-4">
+                  <TrainingScheduleView myTeamIds={scheduleTeamIds} />
                 </div>
               </section>
 

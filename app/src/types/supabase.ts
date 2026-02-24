@@ -181,6 +181,82 @@ export interface Database {
         }
         Relationships: []
       }
+      training_schedules: {
+        Row: {
+          id: string
+          name: string
+          status: 'draft' | 'published'
+          pitch_image_url: string | null
+          pitch_image_path: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name?: string
+          status?: 'draft' | 'published'
+          pitch_image_url?: string | null
+          pitch_image_path?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          status?: 'draft' | 'published'
+          pitch_image_url?: string | null
+          pitch_image_path?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      training_slots: {
+        Row: {
+          id: string
+          schedule_id: string
+          day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+          start_time: string
+          end_time: string
+          venue: string
+          team_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          schedule_id: string
+          day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+          start_time: string
+          end_time: string
+          venue?: string
+          team_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          schedule_id?: string
+          day?: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+          start_time?: string
+          end_time?: string
+          venue?: string
+          team_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_slots_schedule_id_fkey"
+            columns: ["schedule_id"]
+            referencedRelation: "training_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_slots_team_id_fkey"
+            columns: ["team_id"]
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       profiles: {
         Row: {
           id: string

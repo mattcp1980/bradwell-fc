@@ -114,6 +114,38 @@ export function useUpdateOfficial() {
   })
 }
 
+/**
+ * Returns the IDs of teams that the current user (matched by email) is assigned to.
+ * Used in the coach portal to filter the training schedule.
+ */
+export function useMyTeamIds(email: string | null | undefined) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'my-teams', email],
+    enabled: !!email,
+    queryFn: async (): Promise<string[]> => {
+      if (!email) return []
+
+      // Get the official's team name list
+      const { data: official } = await supabase
+        .from('club_officials')
+        .select('teams')
+        .eq('email', email)
+        .maybeSingle()
+
+      const teamNames: string[] = (official as { teams: string[] } | null)?.teams ?? []
+      if (teamNames.length === 0) return []
+
+      // Resolve names → IDs
+      const { data: teams } = await supabase
+        .from('teams')
+        .select('id')
+        .in('name', teamNames)
+
+      return (teams ?? []).map((t: { id: string }) => t.id)
+    },
+  })
+}
+
 export function useDeleteOfficial() {
   const queryClient = useQueryClient()
 
