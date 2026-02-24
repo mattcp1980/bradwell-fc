@@ -6,7 +6,7 @@ const quickLinks = [
   { label: "Fixtures", href: "/fixtures" },
   { label: "News", href: "/news" },
   { label: "Parents", href: "/parents" },
-  { label: "Parent Portal", href: "/portal" },
+  { label: "Coach Portal", href: "/portal" },
 ];
 
 export function Footer() {

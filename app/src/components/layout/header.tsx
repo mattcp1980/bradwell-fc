@@ -51,7 +51,7 @@ export function Header() {
             className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
             onClick={() => navigate("/portal")}
           >
-            Portal
+            Coach
           </Button>
           <Button
             size="sm"
@@ -113,7 +113,7 @@ export function Header() {
             className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
             onClick={() => { setMobileOpen(false); navigate("/portal"); }}
           >
-            Portal
+            Coach
           </Button>
           <Button
             size="sm"

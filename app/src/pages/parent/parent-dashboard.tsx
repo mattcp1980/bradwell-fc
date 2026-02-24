@@ -19,10 +19,10 @@ export function ParentDashboard() {
           {/* Page header */}
           <div className="mb-10">
             <p className="font-heading text-primary uppercase tracking-[0.2em] text-sm mb-1">
-              Portal
+              Coach
             </p>
             <h1 className="text-4xl md:text-5xl text-foreground uppercase">
-              Manager Hub
+              Coach Hub
             </h1>
           </div>
 
