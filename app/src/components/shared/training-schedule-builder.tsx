@@ -96,7 +96,11 @@ function AddSlotRow({
           />
         </div>
       </td>
-      <td className="px-3 py-2">
+      <td
+        className="px-3 py-2"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => e.preventDefault()}
+      >
         <input
           type="text"
           value={venue}
@@ -161,11 +165,11 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
 
   return (
     <tr className="border-b border-border/50 last:border-0 hover:bg-muted/20 transition-colors">
-      <td className="px-3 py-2 text-xs text-muted-foreground">{slot.day}</td>
-      <td className="px-3 py-2 text-xs font-mono text-foreground">
+      <td className="px-3 py-2 text-xs text-muted-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>{slot.day}</td>
+      <td className="px-3 py-2 text-xs font-mono text-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>
         {slot.start_time} – {slot.end_time}
       </td>
-      <td className="px-3 py-2 text-xs text-muted-foreground">{slot.venue || '—'}</td>
+      <td className="px-3 py-2 text-xs text-muted-foreground" onDragOver={(e) => e.preventDefault()} onDrop={(e) => e.preventDefault()}>{slot.venue || '—'}</td>
       <td
         className={`px-3 py-2 transition-colors ${dragOver ? 'bg-primary/10' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
