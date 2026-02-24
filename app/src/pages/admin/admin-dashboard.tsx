@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2 } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,20 +13,23 @@ import { TeamForm } from "@/components/shared/team-form";
 import { NewsForm } from "@/components/shared/news-form";
 import { DocumentForm } from "@/components/shared/document-form";
 import { TrainingScheduleBuilder } from "@/components/shared/training-schedule-builder";
+import { EventForm } from "@/components/shared/event-form";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
 import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/use-documents";
 import { useSiteContent, useUpdateSiteContent } from "@/hooks/use-site-content";
+import { useAllEvents, useAddEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/use-events";
 import { useAuth } from "@/hooks/use-auth";
-import { format } from "date-fns";
-import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput } from "@/types";
+import { format, parseISO } from "date-fns";
+import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput, ClubEvent, ClubEventInput } from "@/types";
 
-type AdminSection = "news" | "training" | "documents" | "officials" | "teams" | "site-content";
+type AdminSection = "news" | "events" | "training" | "documents" | "officials" | "teams" | "site-content";
 
 
 const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = [
   { id: "news", label: "News", icon: Newspaper },
+  { id: "events", label: "Events", icon: CalendarDays },
   { id: "training", label: "Training Timetable", icon: Calendar },
   { id: "documents", label: "Documents", icon: FileText },
   { id: "teams", label: "Teams", icon: Shield },
@@ -572,6 +575,140 @@ function DocumentsSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Events section
+// ---------------------------------------------------------------------------
+
+function EventStatusBadge({ status }: { status: ClubEvent['status'] }) {
+  if (status === 'published') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-green-100 text-green-700">Published</span>
+  }
+  return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-muted text-muted-foreground">Draft</span>
+}
+
+function EventsSection() {
+  const { user } = useAuth()
+  const { data: events = [], isLoading } = useAllEvents()
+  const addEvent = useAddEvent()
+  const updateEvent = useUpdateEvent()
+  const deleteEvent = useDeleteEvent()
+
+  const [addOpen, setAddOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<ClubEvent | null>(null)
+
+  const createdBy = user?.id ?? ''
+
+  function handleAdd(input: ClubEventInput) {
+    addEvent.mutate(input, { onSuccess: () => setAddOpen(false) })
+  }
+
+  function handleUpdate(input: ClubEventInput) {
+    if (!editTarget) return
+    updateEvent.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) })
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm('Delete this event? This cannot be undone.')) return
+    deleteEvent.mutate(id)
+  }
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+        <h2 className="font-heading text-base uppercase tracking-wider">Events</h2>
+        <Button size="sm" className="gap-1.5" onClick={() => setAddOpen(true)}>
+          <Plus size={14} />
+          Add Event
+        </Button>
+      </div>
+
+      {isLoading && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+      )}
+      {!isLoading && events.length === 0 && (
+        <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+          No events yet. Click "Add Event" to get started.
+        </p>
+      )}
+      {!isLoading && events.length > 0 && (
+        <div className="divide-y divide-border">
+          {events.map((event) => (
+            <div key={event.id} className="px-6 py-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <EventStatusBadge status={event.status} />
+                  {event.required_attendance && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 rounded px-1.5 py-0.5">
+                      <AlertCircle size={10} />
+                      Required
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-foreground truncate">{event.title}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {format(parseISO(event.event_date), 'd MMM yyyy')}
+                  {event.location ? ` · ${event.location}` : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setEditTarget(event)}
+                >
+                  <Pencil size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => handleDelete(event.id)}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Add event</DialogTitle>
+            <DialogDescription>Create a new club event.</DialogDescription>
+          </DialogHeader>
+          <EventForm
+            createdBy={createdBy}
+            onSubmit={handleAdd}
+            onCancel={() => setAddOpen(false)}
+            isPending={addEvent.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null) }}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit event</DialogTitle>
+            <DialogDescription>Update the event details below.</DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <EventForm
+              defaultValues={editTarget}
+              createdBy={createdBy}
+              onSubmit={handleUpdate}
+              onCancel={() => setEditTarget(null)}
+              isPending={updateEvent.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </section>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Site content section
 // ---------------------------------------------------------------------------
 
@@ -772,6 +909,9 @@ export function AdminDashboard() {
 
               {/* News */}
               {activeSection === "news" && <NewsSection />}
+
+              {/* Events */}
+              {activeSection === "events" && <EventsSection />}
 
               {/* Training timetable */}
               {activeSection === "training" && (

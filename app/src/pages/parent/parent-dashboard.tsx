@@ -1,14 +1,16 @@
-import { ExternalLink, FileText, Calendar, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { ExternalLink, FileText, Calendar, ChevronRight, AlertCircle, Clock, MapPin } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { useCoachDocuments } from "@/hooks/use-documents";
 import { useAuth } from "@/hooks/use-auth";
 import { useMyTeamIds } from "@/hooks/use-officials";
 import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
+import { useRequiredEvents } from "@/hooks/use-events";
 
 export function ParentDashboard() {
   const { user, role } = useAuth();
   const { data: myTeamIds } = useMyTeamIds(user?.email);
   const { data: documents = [], isLoading: docsLoading } = useCoachDocuments();
+  const { data: requiredEvents = [], isLoading: eventsLoading } = useRequiredEvents();
 
   // Admins see the full schedule; coaches see only their assigned teams
   const scheduleTeamIds = role === 'admin' ? undefined : (myTeamIds ?? []);
@@ -97,6 +99,57 @@ export function ParentDashboard() {
 
             {/* Sidebar */}
             <div className="space-y-6">
+
+              {/* Required attendance events */}
+              <section className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+                  <AlertCircle className="text-primary" size={18} />
+                  <h2 className="font-heading text-base uppercase tracking-wider">
+                    Required Events
+                  </h2>
+                </div>
+                <div className="divide-y divide-border">
+                  {eventsLoading && (
+                    [1, 2].map((n) => (
+                      <div key={n} className="px-4 py-3 space-y-1.5">
+                        <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+                        <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                      </div>
+                    ))
+                  )}
+                  {!eventsLoading && requiredEvents.map((event) => (
+                    <div key={event.id} className="px-4 py-3">
+                      <p className="text-sm font-semibold text-foreground mb-1">{event.title}</p>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar size={11} />
+                          <span>{format(parseISO(event.event_date), 'd MMM yyyy')}</span>
+                        </div>
+                        {(event.start_time || event.end_time) && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock size={11} />
+                            <span>
+                              {event.start_time ? event.start_time.slice(0, 5) : ''}
+                              {event.end_time ? `–${event.end_time.slice(0, 5)}` : ''}
+                            </span>
+                          </div>
+                        )}
+                        {event.location && (
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <MapPin size={11} />
+                            <span>{event.location}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {!eventsLoading && requiredEvents.length === 0 && (
+                    <p className="px-4 py-6 text-sm text-muted-foreground text-center">
+                      No upcoming required events.
+                    </p>
+                  )}
+                </div>
+              </section>
 
               {/* Hivelink */}
               <a

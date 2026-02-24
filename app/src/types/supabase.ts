@@ -278,6 +278,58 @@ export interface Database {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          event_date: string
+          start_time: string | null
+          end_time: string | null
+          location: string
+          required_attendance: boolean
+          status: 'draft' | 'published'
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string
+          event_date: string
+          start_time?: string | null
+          end_time?: string | null
+          location?: string
+          required_attendance?: boolean
+          status?: 'draft' | 'published'
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          event_date?: string
+          start_time?: string | null
+          end_time?: string | null
+          location?: string
+          required_attendance?: boolean
+          status?: 'draft' | 'published'
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

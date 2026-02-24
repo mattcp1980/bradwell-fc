@@ -119,3 +119,22 @@ export interface SiteContent {
 
 /** Map of all site content keys to their values, for easy lookup. */
 export type SiteContentMap = Record<string, string>
+
+export type EventStatus = 'draft' | 'published'
+
+export interface ClubEvent {
+  id: string
+  title: string
+  description: string
+  event_date: string
+  start_time: string | null
+  end_time: string | null
+  location: string
+  required_attendance: boolean
+  status: EventStatus
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export type ClubEventInput = Omit<ClubEvent, 'id' | 'created_at' | 'updated_at'>
