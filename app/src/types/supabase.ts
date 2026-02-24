@@ -130,7 +130,7 @@ export interface Database {
           file_url: string
           file_path: string
           category: string
-          audience: 'admin' | 'parents' | 'general'
+          audience: 'admin' | 'coaches' | 'parents' | 'general'
           uploaded_by: string
           created_at: string
         }
@@ -140,7 +140,7 @@ export interface Database {
           file_url: string
           file_path: string
           category?: string
-          audience: 'admin' | 'parents' | 'general'
+          audience: 'admin' | 'coaches' | 'parents' | 'general'
           uploaded_by: string
           created_at?: string
         }

@@ -24,6 +24,23 @@ export function useDocuments() {
   })
 }
 
+/** Coach portal query — returns coaches + parents + general documents, newest first. */
+export function useCoachDocuments() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'coach'],
+    queryFn: async (): Promise<Document[]> => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .or('audience.eq.coaches,audience.eq.parents,audience.eq.general')
+        .order('created_at', { ascending: false })
+
+      if (error) return []
+      return (data ?? []) as Document[]
+    },
+  })
+}
+
 /** Parent portal query — returns only parents + general documents, newest first. */
 export function useParentDocuments() {
   return useQuery({

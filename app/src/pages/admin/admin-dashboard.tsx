@@ -466,6 +466,9 @@ function OfficialsSection() {
 type AudienceBadgeProps = { audience: Document['audience'] }
 
 function AudienceBadge({ audience }: AudienceBadgeProps) {
+  if (audience === 'coaches') {
+    return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-purple-100 text-purple-700">Coaches</span>
+  }
   if (audience === 'parents') {
     return <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-100 text-blue-700">Parents</span>
   }

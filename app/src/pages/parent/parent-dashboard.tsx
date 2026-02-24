@@ -1,6 +1,6 @@
 import { ExternalLink, FileText, Calendar, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
-import { useParentDocuments } from "@/hooks/use-documents";
+import { useCoachDocuments } from "@/hooks/use-documents";
 
 const placeholderSchedule = [
   { team: "U10 Reds", day: "Tuesday", time: "18:00", venue: "Bradwell Park, Pitch 1" },
@@ -9,7 +9,7 @@ const placeholderSchedule = [
 ];
 
 export function ParentDashboard() {
-  const { data: documents = [], isLoading: docsLoading } = useParentDocuments();
+  const { data: documents = [], isLoading: docsLoading } = useCoachDocuments();
 
   return (
     <div className="pt-24 pb-20">

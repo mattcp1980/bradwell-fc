@@ -12,7 +12,7 @@ import type { DocumentInput } from '@/types'
 const documentSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   category: z.string(),
-  audience: z.enum(['admin', 'parents', 'general']),
+  audience: z.enum(['admin', 'coaches', 'parents', 'general']),
 })
 
 type DocumentFormValues = z.infer<typeof documentSchema>
@@ -35,7 +35,7 @@ export function DocumentForm({ uploadedBy, onSubmit, onCancel, isPending }: Docu
     defaultValues: {
       name: '',
       category: '',
-      audience: 'parents',
+      audience: 'coaches',
     },
   })
 
@@ -124,6 +124,7 @@ export function DocumentForm({ uploadedBy, onSubmit, onCancel, isPending }: Docu
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <option value="admin">Admin Only</option>
+                  <option value="coaches">Coaches</option>
                   <option value="parents">Parents</option>
                   <option value="general">General</option>
                 </select>

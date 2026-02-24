@@ -68,7 +68,7 @@ export interface TeamWithContact extends Team {
   primary_contact: { id: string; full_name: string } | null
 }
 
-export type DocumentAudience = 'admin' | 'parents' | 'general'
+export type DocumentAudience = 'admin' | 'coaches' | 'parents' | 'general'
 
 export interface Document {
   id: string
