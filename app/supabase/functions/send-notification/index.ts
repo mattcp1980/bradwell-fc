@@ -267,6 +267,9 @@ function buildHtml(payload: NotificationPayload): string {
         <!-- Header -->
         <tr>
           <td style="background:#1a3a6b;padding:24px 32px;text-align:center">
+            <img src="https://byfdvqghhsaxfhhsbmzm.supabase.co/storage/v1/object/public/assets/club-badge-B2CwE4NS.jpg"
+                 alt="Bradwell FC" width="64" height="64"
+                 style="display:block;margin:0 auto 12px;border-radius:50%;border:2px solid rgba(255,255,255,0.2)" />
             <p style="margin:0;font-size:11px;color:#f0b429;letter-spacing:.2em;text-transform:uppercase;font-weight:700">
               Bradwell FC
             </p>
@@ -294,7 +297,7 @@ function buildHtml(payload: NotificationPayload): string {
         <tr>
           <td style="background:#f9f9f9;border-top:1px solid #eee;padding:20px 32px;text-align:center">
             <p style="margin:0;font-size:12px;color:#999">
-              Bradwell FC &middot; This email was sent by the club admin.<br>
+              Bradwell FC &middot; This email was sent by a club admin.<br>
               <a href="${SITE_URL}" style="color:#1a3a6b;text-decoration:none">${SITE_URL}</a>
             </p>
           </td>
