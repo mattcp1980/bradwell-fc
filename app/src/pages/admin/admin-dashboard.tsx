@@ -887,8 +887,17 @@ function EventsSection() {
           contentType="event"
           contentId={notifyEvent.id}
           contentTitle={notifyEvent.title}
-          contentSummary={notifyEvent.description ?? undefined}
-          contentUrl={`${window.location.origin}/events`}
+          contentSummary={[
+            format(parseISO(notifyEvent.event_date), 'EEEE d MMMM yyyy'),
+            notifyEvent.start_time
+              ? notifyEvent.end_time
+                ? `${notifyEvent.start_time.slice(0, 5)}–${notifyEvent.end_time.slice(0, 5)}`
+                : notifyEvent.start_time.slice(0, 5)
+              : null,
+            notifyEvent.location || null,
+            notifyEvent.description || null,
+          ].filter(Boolean).join(' · ')}
+          contentUrl={`https://bradwellfc.online`}
         />
       )}
     </section>
