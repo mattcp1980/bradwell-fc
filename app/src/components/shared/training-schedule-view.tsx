@@ -21,9 +21,11 @@ type Props = {
   teamDropdown?: boolean
   myTeamIds?: string[]
   hideUnassigned?: boolean
+  /** When true, shows an additional "Download full schedule" button that ignores any team filter. */
+  showFullSchedulePdf?: boolean
 }
 
-export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdown = false, myTeamIds, hideUnassigned = false }: Props) {
+export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdown = false, myTeamIds, hideUnassigned = false, showFullSchedulePdf = false }: Props) {
   const { data: schedule, isLoading: scheduleLoading } = usePublishedSchedule()
   const { data: allSlots = [], isLoading: slotsLoading } = useTrainingSlots(schedule?.id ?? null)
 
@@ -93,6 +95,16 @@ export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdow
             <Download size={13} />
             Download PDF
           </button>
+          {showFullSchedulePdf && (
+            <button
+              type="button"
+              onClick={() => generateSchedulePdf(schedule.name, allSlots)}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Download size={13} />
+              Full schedule PDF
+            </button>
+          )}
         </div>
       </div>
 

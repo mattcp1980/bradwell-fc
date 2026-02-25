@@ -45,7 +45,7 @@ export function ParentDashboard() {
                   </h2>
                 </div>
                 <div className="px-6 py-4">
-                  <TrainingScheduleView myTeamIds={scheduleTeamIds} hideUnassigned />
+                  <TrainingScheduleView myTeamIds={scheduleTeamIds} hideUnassigned showFullSchedulePdf />
                 </div>
               </section>
 

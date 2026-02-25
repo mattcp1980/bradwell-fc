@@ -14,7 +14,7 @@
 import { useState, useRef } from 'react'
 import {
   Plus, Trash2, Image, ChevronDown, ChevronUp,
-  CheckCircle, Clock, Pencil, X, Loader2, Copy,
+  CheckCircle, Clock, Pencil, X, Loader2, Copy, Download,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTeams } from '@/hooks/use-teams'
@@ -29,6 +29,7 @@ import {
   useDeleteSlot,
   uploadScheduleImage,
 } from '@/hooks/use-training-schedule'
+import { generateSchedulePdf } from '@/lib/generate-schedule-pdf'
 import type { TrainingSchedule, TrainingDay, TrainingSlotWithTeam } from '@/types'
 
 const DAYS: TrainingDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -304,6 +305,15 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
           disabled={updateSchedule.isPending}
         >
           {schedule.status === 'published' ? 'Unpublish' : 'Publish'}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs gap-1.5"
+          onClick={() => generateSchedulePdf(schedule.name, slots)}
+          disabled={slots.length === 0}
+        >
+          <Download size={12} /> Download PDF
         </Button>
         <div className="flex items-center gap-2 ml-auto">
           <input
