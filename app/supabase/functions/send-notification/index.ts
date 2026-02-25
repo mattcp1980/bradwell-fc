@@ -186,36 +186,34 @@ Deno.serve(async (req: Request) => {
   }
 
   // ---------------------------------------------------------------------------
-  // Send emails
+  // Send emails via Resend Batch API (up to 100 per call, counts as 1 request)
+  // Chunk into groups of 100 in case the list ever exceeds the batch limit
   // ---------------------------------------------------------------------------
   let sent = 0
   const failed: string[] = []
 
-  // Send individually so each recipient gets a personalised To: header
-  // For large clubs consider batch API — Resend supports up to 100 per batch
-  const results = await Promise.allSettled(
-    recipientEmails.map((email) =>
-      fetch(RESEND_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendApiKey}`,
-        },
-        body: JSON.stringify({ ...resendBase, to: [email] }),
-      }).then(async (r) => {
-        if (!r.ok) throw new Error(await r.text())
-      })
-    )
-  )
+  const BATCH_SIZE = 100
+  for (let i = 0; i < recipientEmails.length; i += BATCH_SIZE) {
+    const chunk = recipientEmails.slice(i, i + BATCH_SIZE)
+    const batch = chunk.map((email) => ({ ...resendBase, to: [email] }))
 
-  results.forEach((r, i) => {
-    if (r.status === 'fulfilled') {
-      sent++
+    const res = await fetch('https://api.resend.com/emails/batch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${resendApiKey}`,
+      },
+      body: JSON.stringify(batch),
+    })
+
+    if (res.ok) {
+      sent += chunk.length
     } else {
-      failed.push(recipientEmails[i])
-      console.error(`Failed to send to ${recipientEmails[i]}:`, r.reason)
+      const errText = await res.text()
+      console.error(`Batch send failed for chunk starting at ${i}:`, errText)
+      failed.push(...chunk)
     }
-  })
+  }
 
   // ---------------------------------------------------------------------------
   // Audit log
