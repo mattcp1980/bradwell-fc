@@ -9,7 +9,9 @@
  */
 
 import { useState } from 'react'
+import { Download } from 'lucide-react'
 import { usePublishedSchedule, useTrainingSlots } from '@/hooks/use-training-schedule'
+import { generateSchedulePdf } from '@/lib/generate-schedule-pdf'
 import type { TrainingDay, TrainingSlotWithTeam } from '@/types'
 
 const DAYS: TrainingDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -67,21 +69,31 @@ export function TrainingScheduleView({ filterTeamId: externalFilter, teamDropdow
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Schedule name + pitch image */}
+      {/* Schedule name + actions */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground">
           {schedule.name}
         </p>
-        {schedule.pitch_image_url && (
-          <a
-            href={schedule.pitch_image_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary underline-offset-2 hover:underline"
+        <div className="flex items-center gap-3">
+          {schedule.pitch_image_url && (
+            <a
+              href={schedule.pitch_image_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary underline-offset-2 hover:underline"
+            >
+              View pitch layout →
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => generateSchedulePdf(schedule.name, visibleSlots)}
+            className="inline-flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors"
           >
-            View pitch layout →
-          </a>
-        )}
+            <Download size={13} />
+            Download PDF
+          </button>
+        </div>
       </div>
 
       {/* Team filter dropdown */}
