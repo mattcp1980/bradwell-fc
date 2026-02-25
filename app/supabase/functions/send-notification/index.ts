@@ -19,6 +19,12 @@ const RESEND_API = 'https://api.resend.com/emails'
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'Bradwell FC <noreply@bradwellfc.co.uk>'
 const SITE_URL   = Deno.env.get('SITE_URL')   ?? 'https://bradwellfc.co.uk'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
 // ---------------------------------------------------------------------------
 // Types (mirrored from frontend — edge functions can't import from src/)
 // ---------------------------------------------------------------------------
@@ -51,12 +57,7 @@ interface NotificationPayload {
 Deno.serve(async (req: Request) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type, apikey',
-      },
-    })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   const resendApiKey = Deno.env.get('RESEND_API_KEY')
@@ -312,9 +313,6 @@ function contentLabel(type: string): string {
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 }
