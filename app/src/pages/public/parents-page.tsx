@@ -71,22 +71,6 @@ export function ParentsPage() {
             )}
           </div>
 
-          <div className="bg-card border border-border rounded-lg p-6">
-            <MapPin className="text-primary mb-3" size={28} />
-            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Venues</h3>
-            <p className="text-muted-foreground text-sm">
-              {g('parents_venues', 'Home matches and training take place at Bradwell Park. Away fixture details are shared by team managers ahead of match day.')}
-            </p>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-6">
-            <ShieldCheck className="text-primary mb-3" size={28} />
-            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Safeguarding</h3>
-            <p className="text-muted-foreground text-sm">
-              {g('parents_safeguarding', 'The welfare of every child is our priority. All coaches are DBS checked and FA safeguarding trained. Contact our Welfare Officer with any concerns.')}
-            </p>
-          </div>
-
           <div
             className={`bg-card border border-border rounded-lg transition-all ${docsOpen ? 'md:col-span-2 lg:col-span-3' : ''}`}
           >
@@ -136,6 +120,22 @@ export function ParentsPage() {
                 ))}
               </div>
             )}
+          </div>
+
+          <div className="bg-card border border-border rounded-lg p-6">
+            <MapPin className="text-primary mb-3" size={28} />
+            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Venues</h3>
+            <p className="text-muted-foreground text-sm">
+              {g('parents_venues', 'Home matches and training take place at Bradwell Park. Away fixture details are shared by team managers ahead of match day.')}
+            </p>
+          </div>
+
+          <div className="bg-card border border-border rounded-lg p-6">
+            <ShieldCheck className="text-primary mb-3" size={28} />
+            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Safeguarding</h3>
+            <p className="text-muted-foreground text-sm">
+              {g('parents_safeguarding', 'The welfare of every child is our priority. All coaches are DBS checked and FA safeguarding trained. Contact our Welfare Officer with any concerns.')}
+            </p>
           </div>
 
           <div className="bg-card border border-border rounded-lg p-6">
