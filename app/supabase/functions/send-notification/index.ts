@@ -54,7 +54,7 @@ Deno.serve(async (req: Request) => {
     return new Response(null, {
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type, apikey',
       },
     })
   }
