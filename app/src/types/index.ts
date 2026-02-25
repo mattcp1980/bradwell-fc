@@ -138,3 +138,28 @@ export interface ClubEvent {
 }
 
 export type ClubEventInput = Omit<ClubEvent, 'id' | 'created_at' | 'updated_at'>
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export type NotificationScope =
+  | { type: 'everyone' }
+  | { type: 'admins' }
+  | { type: 'coaches' }
+  | { type: 'team'; teamName: string }
+  | { type: 'age_group'; ageGroup: string }
+  | { type: 'individuals'; officialIds: string[] }
+
+export interface NotificationPayload {
+  subject: string
+  contentType: 'news' | 'event' | 'document' | 'schedule'
+  contentId: string
+  contentTitle: string
+  contentSummary?: string
+  contentUrl?: string
+  scope: NotificationScope
+  /** Base64-encoded PDF — only present for contentType='schedule' */
+  pdfBase64?: string
+  pdfFilename?: string
+}

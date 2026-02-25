@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp, Copy } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp, Copy, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { NewsForm } from "@/components/shared/news-form";
 import { DocumentForm } from "@/components/shared/document-form";
 import { TrainingScheduleBuilder } from "@/components/shared/training-schedule-builder";
 import { EventForm } from "@/components/shared/event-form";
+import { NotifyModal } from "@/components/shared/notify-modal";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
 import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/use-news";
@@ -63,6 +64,7 @@ function NewsSection() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<NewsPost | null>(null);
   const [cloneSource, setCloneSource] = useState<NewsPost | null>(null);
+  const [notifyTarget, setNotifyTarget] = useState<NewsPost | null>(null);
 
   const authorId = user?.id ?? '';
 
@@ -139,6 +141,15 @@ function NewsSection() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Send notification"
+                  onClick={() => setNotifyTarget(post)}
+                >
+                  <Bell size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setEditTarget(post)}
                 >
                   <Pencil size={14} />
@@ -207,6 +218,18 @@ function NewsSection() {
           )}
         </DialogContent>
       </Dialog>
+
+      {notifyTarget && (
+        <NotifyModal
+          open={!!notifyTarget}
+          onClose={() => setNotifyTarget(null)}
+          contentType="news"
+          contentId={notifyTarget.id}
+          contentTitle={notifyTarget.title}
+          contentSummary={notifyTarget.excerpt}
+          contentUrl={`${window.location.origin}/news/${notifyTarget.id}`}
+        />
+      )}
     </section>
   );
 }
@@ -567,6 +590,7 @@ function DocumentsSection() {
   const deleteDocument = useDeleteDocument();
 
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [notifyDoc, setNotifyDoc] = useState<Document | null>(null);
 
   const uploadedBy = user?.id ?? '';
 
@@ -629,6 +653,15 @@ function DocumentsSection() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Send notification"
+                  onClick={() => setNotifyDoc(doc)}
+                >
+                  <Bell size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDelete(doc)}
                 >
@@ -654,6 +687,18 @@ function DocumentsSection() {
           />
         </DialogContent>
       </Dialog>
+
+      {notifyDoc && (
+        <NotifyModal
+          open={!!notifyDoc}
+          onClose={() => setNotifyDoc(null)}
+          contentType="document"
+          contentId={notifyDoc.id}
+          contentTitle={notifyDoc.name}
+          contentSummary={notifyDoc.category ? `Category: ${notifyDoc.category}` : undefined}
+          contentUrl={notifyDoc.file_url}
+        />
+      )}
     </section>
   );
 }
@@ -679,6 +724,7 @@ function EventsSection() {
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<ClubEvent | null>(null)
   const [cloneSource, setCloneSource] = useState<ClubEvent | null>(null)
+  const [notifyEvent, setNotifyEvent] = useState<ClubEvent | null>(null)
 
   const createdBy = user?.id ?? ''
 
@@ -756,6 +802,15 @@ function EventsSection() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  title="Send notification"
+                  onClick={() => setNotifyEvent(event)}
+                >
+                  <Bell size={14} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
                   onClick={() => setEditTarget(event)}
                 >
                   <Pencil size={14} />
@@ -824,6 +879,18 @@ function EventsSection() {
           )}
         </DialogContent>
       </Dialog>
+
+      {notifyEvent && (
+        <NotifyModal
+          open={!!notifyEvent}
+          onClose={() => setNotifyEvent(null)}
+          contentType="event"
+          contentId={notifyEvent.id}
+          contentTitle={notifyEvent.title}
+          contentSummary={notifyEvent.description ?? undefined}
+          contentUrl={`${window.location.origin}/events`}
+        />
+      )}
     </section>
   )
 }

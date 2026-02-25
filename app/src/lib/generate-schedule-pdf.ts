@@ -50,38 +50,33 @@ function drawCell(
   }
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Core builder — returns the jsPDF document ─────────────────────────────────
 
-export function generateSchedulePdf(
-  scheduleName: string,
-  slots: TrainingSlotWithTeam[]
-): void {
-  // ── 1. Derive unique venues (preserve first-seen order) ──────────────────
+function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[]): jsPDF {
+  // 1. Derive unique venues (preserve first-seen order)
   const venueOrder: string[] = []
   for (const s of slots) {
     if (s.venue && !venueOrder.includes(s.venue)) venueOrder.push(s.venue)
   }
-  // Fallback: if no venues assigned, put everything in a single "–" column
   if (venueOrder.length === 0) venueOrder.push('–')
 
-  // ── 2. Page sizing ───────────────────────────────────────────────────────
+  // 2. Page sizing
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-  const pageW = doc.internal.pageSize.getWidth()   // 297 mm
-  const pageH = doc.internal.pageSize.getHeight()  // 210 mm
+  const pageW = doc.internal.pageSize.getWidth()
+  const pageH = doc.internal.pageSize.getHeight()
 
-  // Distribute remaining width among venue columns
   const usableW     = pageW - PAGE_MARGIN * 2
   const fixedW      = DAY_COL_W + TIME_COL_W
   const venueW      = Math.max(MIN_VENUE_W, (usableW - fixedW) / venueOrder.length)
   const totalTableW = fixedW + venueW * venueOrder.length
 
-  // ── 3. Title ─────────────────────────────────────────────────────────────
+  // 3. Title
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   setText(doc, TEXT_DARK)
   doc.text(scheduleName, pageW / 2, PAGE_MARGIN + 5, { align: 'center' })
 
-  // ── 4. Header row ────────────────────────────────────────────────────────
+  // 4. Header row
   let y = PAGE_MARGIN + TITLE_H
   const tableLeft = PAGE_MARGIN
 
@@ -102,17 +97,15 @@ export function generateSchedulePdf(
 
   y += HEADER_H
 
-  // ── 5. Data rows ─────────────────────────────────────────────────────────
+  // 5. Data rows
   for (const day of DAYS) {
     const daySlots = slots.filter((s) => s.day === day)
     if (daySlots.length === 0) continue
 
-    // Sort by start_time then venue
     const sorted = [...daySlots].sort((a, b) =>
       a.start_time.localeCompare(b.start_time) || (a.venue ?? '').localeCompare(b.venue ?? '')
     )
 
-    // Group into time-blocks (same start/end time = one row across venue columns)
     type TimeBlock = { start: string; end: string; cells: Map<string, string> }
     const blocks: TimeBlock[] = []
     for (const s of sorted) {
@@ -128,13 +121,11 @@ export function generateSchedulePdf(
 
     const dayBlockH = blocks.length * ROW_HEIGHT
 
-    // Page overflow — start new page
     if (y + dayBlockH > pageH - PAGE_MARGIN) {
       doc.addPage()
       y = PAGE_MARGIN
     }
 
-    // Day label cell spanning all time-block rows (vertically centred)
     setFill(doc, DAY_BG)
     doc.rect(tableLeft, y, DAY_COL_W, dayBlockH, 'F')
     setDraw(doc, BORDER)
@@ -144,12 +135,10 @@ export function generateSchedulePdf(
     setText(doc, TEXT_DARK)
     doc.text(day, tableLeft + 3, y + dayBlockH / 2 + 1.5)
 
-    // Time + venue cells
     let rowY = y
     for (const block of blocks) {
       const timeStr = `${block.start} - ${block.end}`
 
-      // Time cell
       setFill(doc, CELL_BG)
       doc.rect(tableLeft + DAY_COL_W, rowY, TIME_COL_W, ROW_HEIGHT, 'F')
       setDraw(doc, BORDER)
@@ -159,7 +148,6 @@ export function generateSchedulePdf(
       setText(doc, TEXT_MUTED)
       doc.text(timeStr, tableLeft + DAY_COL_W + 3, rowY + ROW_HEIGHT / 2 + 1.5)
 
-      // Venue cells
       venueOrder.forEach((venue, i) => {
         const teamName = block.cells.get(venue) ?? ''
         const hasTeam  = teamName.length > 0
@@ -183,12 +171,36 @@ export function generateSchedulePdf(
     y += dayBlockH
   }
 
-  // ── 6. Outer border ───────────────────────────────────────────────────────
+  // 6. Outer border
   setDraw(doc, BORDER)
   doc.setLineWidth(0.4)
   doc.rect(tableLeft, PAGE_MARGIN + TITLE_H, totalTableW, y - (PAGE_MARGIN + TITLE_H))
 
-  // ── 7. Save ───────────────────────────────────────────────────────────────
+  return doc
+}
+
+// ── Public exports ────────────────────────────────────────────────────────────
+
+/** Triggers a browser download of the schedule as a PDF file. */
+export function generateSchedulePdf(
+  scheduleName: string,
+  slots: TrainingSlotWithTeam[]
+): void {
+  const doc = buildScheduleDoc(scheduleName, slots)
   const filename = `${scheduleName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
   doc.save(filename)
+}
+
+/**
+ * Returns the schedule PDF as a base64 string (no download triggered).
+ * Used when attaching the PDF to an email notification via the edge function.
+ */
+export function generateSchedulePdfBase64(
+  scheduleName: string,
+  slots: TrainingSlotWithTeam[]
+): string {
+  const doc = buildScheduleDoc(scheduleName, slots)
+  // output('datauristring') returns "data:application/pdf;base64,<data>"
+  const dataUri = doc.output('datauristring')
+  return dataUri.split(',')[1]
 }

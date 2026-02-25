@@ -14,7 +14,7 @@
 import { useState, useRef } from 'react'
 import {
   Plus, Trash2, Image, ChevronDown, ChevronUp,
-  CheckCircle, Clock, Pencil, X, Loader2, Copy, Download,
+  CheckCircle, Clock, Pencil, X, Loader2, Copy, Download, Bell,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTeams } from '@/hooks/use-teams'
@@ -29,7 +29,8 @@ import {
   useDeleteSlot,
   uploadScheduleImage,
 } from '@/hooks/use-training-schedule'
-import { generateSchedulePdf } from '@/lib/generate-schedule-pdf'
+import { generateSchedulePdf, generateSchedulePdfBase64 } from '@/lib/generate-schedule-pdf'
+import { NotifyModal } from '@/components/shared/notify-modal'
 import type { TrainingSchedule, TrainingDay, TrainingSlotWithTeam } from '@/types'
 
 const DAYS: TrainingDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -451,6 +452,34 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
 }
 
 // ---------------------------------------------------------------------------
+// Schedule notifier — fetches slots then opens NotifyModal with PDF attached
+// ---------------------------------------------------------------------------
+
+function ScheduleNotifier({
+  schedule,
+  onClose,
+}: {
+  schedule: TrainingSchedule
+  onClose: () => void
+}) {
+  const { data: slots = [] } = useTrainingSlots(schedule.id)
+  const pdfBase64 = generateSchedulePdfBase64(schedule.name, slots)
+  const pdfFilename = `${schedule.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
+
+  return (
+    <NotifyModal
+      open
+      onClose={onClose}
+      contentType="schedule"
+      contentId={schedule.id}
+      contentTitle={`Training Schedule: ${schedule.name}`}
+      pdfBase64={pdfBase64}
+      pdfFilename={pdfFilename}
+    />
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -466,6 +495,7 @@ export function TrainingScheduleBuilder() {
   const [addingNew, setAddingNew] = useState(false)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
+  const [notifySchedule, setNotifySchedule] = useState<TrainingSchedule | null>(null)
 
   function handleCreate() {
     const name = newName.trim() || 'Training Schedule'
@@ -533,6 +563,10 @@ export function TrainingScheduleBuilder() {
         </div>
       )}
 
+      {notifySchedule && (
+        <ScheduleNotifier schedule={notifySchedule} onClose={() => setNotifySchedule(null)} />
+      )}
+
       {schedules.map((schedule) => {
         const isExpanded = expandedId === schedule.id
         const isRenaming = renamingId === schedule.id
@@ -575,6 +609,15 @@ export function TrainingScheduleBuilder() {
                   title="Duplicate"
                 >
                   {cloneSchedule.isPending ? <Loader2 size={13} className="animate-spin" /> : <Copy size={13} />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                  onClick={() => setNotifySchedule(schedule)}
+                  title="Send notification"
+                >
+                  <Bell size={13} />
                 </Button>
                 <Button
                   variant="ghost"
