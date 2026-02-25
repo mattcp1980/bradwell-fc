@@ -9,15 +9,14 @@
  *   RESEND_API_KEY   — set via: supabase secrets set RESEND_API_KEY=re_...
  *
  * Optional secrets (fall back to defaults):
- *   FROM_EMAIL       — sender address, default: noreply@bradwellfc.co.uk
- *   SITE_URL         — public site URL, default: https://bradwellfc.co.uk
+ *   FROM_EMAIL       — sender address, default: derived from contact_email in site_content
+ *   SITE_URL         — public site URL, default: https://bradwellfc.online
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API = 'https://api.resend.com/emails'
-const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'Bradwell FC <noreply@bradwellfc.co.uk>'
-const SITE_URL   = Deno.env.get('SITE_URL')   ?? 'https://bradwellfc.co.uk'
+const SITE_URL   = Deno.env.get('SITE_URL') ?? 'https://bradwellfc.online'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,6 +93,16 @@ Deno.serve(async (req: Request) => {
   if (!official || official.role !== 'admin') {
     return json({ error: 'Forbidden — admins only' }, 403)
   }
+
+  // Derive the from address from the contact_email stored in site_content
+  const { data: siteContent } = await supabase
+    .from('site_content')
+    .select('value')
+    .eq('key', 'contact_email')
+    .maybeSingle()
+  const contactEmail: string = siteContent?.value ?? 'noreply@bradwellfc.online'
+  const fromDomain = contactEmail.includes('@') ? contactEmail.split('@')[1] : 'bradwellfc.online'
+  const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? `Bradwell FC <noreply@${fromDomain}>`
 
   const payload: NotificationPayload = await req.json()
 
