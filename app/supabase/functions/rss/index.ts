@@ -36,6 +36,7 @@ Deno.serve(async (req: Request) => {
     .from('news_posts')
     .select('id, title, excerpt, cover_image_url, created_at')
     .eq('status', 'published')
+    .eq('post_to_facebook', true)
     .order('created_at', { ascending: false })
     .limit(20)
 

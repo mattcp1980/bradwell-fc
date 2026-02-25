@@ -34,6 +34,7 @@ export interface NewsPost {
   status: NewsPostStatus
   scheduled_at: string | null
   author_id: string
+  post_to_facebook: boolean
   created_at: string
   updated_at: string
 }

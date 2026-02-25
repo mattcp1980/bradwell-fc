@@ -20,6 +20,7 @@ const newsSchema = z.object({
   cover_image_url: z.string().nullable(),
   images: z.array(z.string()),
   author_id: z.string(),
+  post_to_facebook: z.boolean(),
 }).refine(
   (data) => data.status !== 'scheduled' || (data.scheduled_at !== null && data.scheduled_at !== ''),
   { message: 'Publish date is required when status is "Scheduled"', path: ['scheduled_at'] }
@@ -51,6 +52,7 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
       cover_image_url: defaultValues?.cover_image_url ?? null,
       images: defaultValues?.images ?? [],
       author_id: authorId,
+      post_to_facebook: defaultValues?.post_to_facebook ?? false,
     },
   })
 
@@ -82,6 +84,7 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
           cover_image_url: coverUrl,
           images: extraUrls,
           author_id: authorId,
+          post_to_facebook: values.post_to_facebook,
         },
         clientId
       )
@@ -136,6 +139,29 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
               <p className="text-xs text-muted-foreground">{additionalFiles.length} file(s) selected</p>
             )}
           </div>
+
+          <FormField
+            control={form.control}
+            name="post_to_facebook"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      id="post_to_facebook"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="rounded border-border"
+                    />
+                  </FormControl>
+                  <FormLabel htmlFor="post_to_facebook" className="text-sm font-normal cursor-pointer">
+                    Include in Facebook RSS feed
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
