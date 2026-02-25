@@ -37,7 +37,7 @@ function ToolbarButton({ onClick, active, title, children }: ToolbarButtonProps)
 export function NewsEditor({ value, onChange }: NewsEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ link: false }),
       Placeholder.configure({ placeholder: 'Write your article…' }),
       Link.configure({ openOnClick: false }),
       Image,

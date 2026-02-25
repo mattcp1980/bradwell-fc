@@ -371,7 +371,7 @@ port = 54327
 backend = "postgres"
 
 [functions.send-notification]
-verify_jwt = true
+verify_jwt = false
 
 [functions.rss]
 verify_jwt = false
