@@ -1,12 +1,15 @@
 import { useState } from "react";
-import { Calendar, Clock, MapPin, Mail, FileText, ShieldCheck, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, Clock, MapPin, Mail, FileText, ShieldCheck, CreditCard, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { format } from "date-fns";
 import { useSiteContent } from "@/hooks/use-site-content";
+import { useParentDocuments } from "@/hooks/use-documents";
 import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
 
 export function ParentsPage() {
   const { data: content = {} } = useSiteContent();
   const g = (key: string, fallback: string) => content[key] || fallback;
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const { data: documents = [], isLoading: docsLoading } = useParentDocuments();
 
   const paymentUrl = g('parents_make_a_payment_url', 'https://bradwell-fc.hivelink.co.uk/451/');
 
@@ -83,12 +86,43 @@ export function ParentsPage() {
             </p>
           </div>
 
-          <div className="bg-card border border-border rounded-lg p-6">
-            <FileText className="text-primary mb-3" size={28} />
-            <h3 className="font-heading text-lg uppercase text-foreground mb-2">Club Policies</h3>
-            <p className="text-muted-foreground text-sm">
-              {g('parents_club_policies', 'Our code of conduct, anti-bullying policy, and respect programme documents are available from your team manager or the club secretary.')}
-            </p>
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="p-6 pb-4">
+              <FileText className="text-primary mb-3" size={28} />
+              <h3 className="font-heading text-lg uppercase text-foreground mb-2">Club Documents</h3>
+              <p className="text-muted-foreground text-sm">
+                {g('parents_club_policies', 'Key club documents including our code of conduct, policies, and forms.')}
+              </p>
+            </div>
+            <div className="divide-y divide-border border-t border-border">
+              {docsLoading && (
+                [1, 2].map((n) => (
+                  <div key={n} className="px-6 py-3 flex items-center gap-3 animate-pulse">
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                ))
+              )}
+              {!docsLoading && documents.length === 0 && (
+                <p className="px-6 py-4 text-xs text-muted-foreground italic">No documents uploaded yet.</p>
+              )}
+              {!docsLoading && documents.map((doc) => (
+                <a
+                  key={doc.id}
+                  href={doc.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {doc.category ? `${doc.category} · ` : ''}Added {format(new Date(doc.created_at), 'd MMM yyyy')}
+                    </p>
+                  </div>
+                  <ExternalLink size={13} className="text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                </a>
+              ))}
+            </div>
           </div>
 
           <div className="bg-card border border-border rounded-lg p-6">
