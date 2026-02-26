@@ -142,7 +142,7 @@ export function NotifyModal({
               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{contentSummary}</p>
             )}
             {contentType === 'schedule' && (
-              <p className="text-xs text-primary mt-1">Full schedule will be attached as PDF</p>
+              <p className="text-xs text-primary mt-1">Full schedule will be provided as PDF</p>
             )}
           </div>
 
