@@ -167,48 +167,67 @@ Deno.serve(async (req: Request) => {
   }
 
   // ---------------------------------------------------------------------------
-  // Build email
+  // For schedule PDFs: upload to Supabase Storage and include a download link
+  // in the email body instead of attaching. This allows use of the batch API.
   // ---------------------------------------------------------------------------
-  const html = buildHtml(payload)
+  let scheduleDownloadUrl: string | undefined
+
+  if (payload.contentType === 'schedule' && payload.pdfBase64 && payload.pdfFilename) {
+    const pdfBytes = Uint8Array.from(atob(payload.pdfBase64), (c) => c.charCodeAt(0))
+    const storagePath = `${crypto.randomUUID()}/${payload.pdfFilename}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('schedule-pdfs')
+      .upload(storagePath, pdfBytes, { contentType: 'application/pdf', upsert: false })
+
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage
+        .from('schedule-pdfs')
+        .getPublicUrl(storagePath)
+      scheduleDownloadUrl = urlData.publicUrl
+    } else {
+      console.error('PDF upload failed:', uploadError.message)
+    }
+  }
 
   // ---------------------------------------------------------------------------
-  // Send a single email with all recipients in BCC.
-  // - Recipients cannot see each other's addresses.
-  // - Attachments are fully supported (unlike the batch API).
-  // - One API call regardless of recipient count.
+  // Build email
   // ---------------------------------------------------------------------------
-  const resendPayload: Record<string, unknown> = {
+  const html = buildHtml(payload, scheduleDownloadUrl)
+
+  // ---------------------------------------------------------------------------
+  // Send via Resend Batch API — one call per 100 recipients, no attachment needed
+  // ---------------------------------------------------------------------------
+  let sent = 0
+  const failed: string[] = []
+
+  const resendBase: Record<string, unknown> = {
     from: FROM_EMAIL,
-    to: [FROM_EMAIL],   // Resend requires a to address; send to self, everyone else is BCC
-    bcc: recipientEmails,
     subject: payload.subject,
     html,
   }
 
-  if (payload.contentType === 'schedule' && payload.pdfBase64 && payload.pdfFilename) {
-    resendPayload.attachments = [
-      { filename: payload.pdfFilename, content: payload.pdfBase64 },
-    ]
-  }
+  const BATCH_SIZE = 100
+  for (let i = 0; i < recipientEmails.length; i += BATCH_SIZE) {
+    const chunk = recipientEmails.slice(i, i + BATCH_SIZE)
+    const batch = chunk.map((email) => ({ ...resendBase, to: [email] }))
 
-  let sent = 0
-  const failed: string[] = []
+    const res = await fetch('https://api.resend.com/emails/batch', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${resendApiKey}`,
+      },
+      body: JSON.stringify(batch),
+    })
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${resendApiKey}`,
-    },
-    body: JSON.stringify(resendPayload),
-  })
-
-  if (res.ok) {
-    sent = recipientEmails.length
-  } else {
-    const errText = await res.text()
-    console.error('Send failed:', errText)
-    failed.push(...recipientEmails)
+    if (res.ok) {
+      sent += chunk.length
+    } else {
+      const errText = await res.text()
+      console.error(`Batch send failed for chunk starting at ${i}:`, errText)
+      failed.push(...chunk)
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -230,7 +249,7 @@ Deno.serve(async (req: Request) => {
 // HTML email builder
 // ---------------------------------------------------------------------------
 
-function buildHtml(payload: NotificationPayload): string {
+function buildHtml(payload: NotificationPayload, scheduleDownloadUrl?: string): string {
   const ctaBlock =
     payload.contentType !== 'schedule' && payload.contentUrl
       ? `<p style="margin:24px 0 0">
@@ -240,9 +259,17 @@ function buildHtml(payload: NotificationPayload): string {
              View ${contentLabel(payload.contentType)}
            </a>
          </p>`
+      : payload.contentType === 'schedule' && scheduleDownloadUrl
+      ? `<p style="margin:24px 0 0">
+           <a href="${scheduleDownloadUrl}"
+              style="display:inline-block;background:#1a3a6b;color:#fff;padding:12px 24px;
+                     border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">
+             Download Training Schedule (PDF)
+           </a>
+         </p>`
       : payload.contentType === 'schedule'
       ? `<p style="color:#666;font-size:14px;margin-top:16px">
-           The full training schedule is attached as a PDF to this email.
+           The training schedule will be available to download shortly.
          </p>`
       : ''
 
