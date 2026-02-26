@@ -15,8 +15,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const RESEND_API = 'https://api.resend.com/emails'
-const SITE_URL   = Deno.env.get('SITE_URL') ?? 'https://bradwellfc.online'
+const SITE_URL = Deno.env.get('SITE_URL') ?? 'https://bradwellfc.online'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -172,47 +171,44 @@ Deno.serve(async (req: Request) => {
   // ---------------------------------------------------------------------------
   const html = buildHtml(payload)
 
-  // Build Resend payload — attach PDF for schedules
-  const resendBase: Record<string, unknown> = {
+  // ---------------------------------------------------------------------------
+  // Send a single email with all recipients in BCC.
+  // - Recipients cannot see each other's addresses.
+  // - Attachments are fully supported (unlike the batch API).
+  // - One API call regardless of recipient count.
+  // ---------------------------------------------------------------------------
+  const resendPayload: Record<string, unknown> = {
     from: FROM_EMAIL,
+    to: [FROM_EMAIL],   // Resend requires a to address; send to self, everyone else is BCC
+    bcc: recipientEmails,
     subject: payload.subject,
     html,
   }
 
   if (payload.contentType === 'schedule' && payload.pdfBase64 && payload.pdfFilename) {
-    resendBase.attachments = [
+    resendPayload.attachments = [
       { filename: payload.pdfFilename, content: payload.pdfBase64 },
     ]
   }
 
-  // ---------------------------------------------------------------------------
-  // Send emails via Resend Batch API (up to 100 per call, counts as 1 request)
-  // Chunk into groups of 100 in case the list ever exceeds the batch limit
-  // ---------------------------------------------------------------------------
   let sent = 0
   const failed: string[] = []
 
-  const BATCH_SIZE = 100
-  for (let i = 0; i < recipientEmails.length; i += BATCH_SIZE) {
-    const chunk = recipientEmails.slice(i, i + BATCH_SIZE)
-    const batch = chunk.map((email) => ({ ...resendBase, to: [email] }))
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify(resendPayload),
+  })
 
-    const res = await fetch('https://api.resend.com/emails/batch', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${resendApiKey}`,
-      },
-      body: JSON.stringify(batch),
-    })
-
-    if (res.ok) {
-      sent += chunk.length
-    } else {
-      const errText = await res.text()
-      console.error(`Batch send failed for chunk starting at ${i}:`, errText)
-      failed.push(...chunk)
-    }
+  if (res.ok) {
+    sent = recipientEmails.length
+  } else {
+    const errText = await res.text()
+    console.error('Send failed:', errText)
+    failed.push(...recipientEmails)
   }
 
   // ---------------------------------------------------------------------------
