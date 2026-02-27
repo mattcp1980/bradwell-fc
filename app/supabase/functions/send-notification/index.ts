@@ -9,8 +9,9 @@
  *   RESEND_API_KEY   — set via: supabase secrets set RESEND_API_KEY=re_...
  *
  * Optional secrets (fall back to defaults):
- *   FROM_EMAIL       — sender address, default: derived from contact_email in site_content
- *   SITE_URL         — public site URL, default: https://bradwellfc.online
+ *   FROM_EMAIL         — sender address, default: derived from contact_email in site_content
+ *   SITE_URL           — public site URL, default: https://bradwellfc.online
+ *   SLACK_WEBHOOK_URL  — Slack Incoming Webhook; set via: supabase secrets set SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -46,6 +47,7 @@ interface NotificationPayload {
   scope: NotificationScope
   pdfBase64?: string
   pdfFilename?: string
+  postToSlack?: boolean
 }
 
 // ---------------------------------------------------------------------------
@@ -191,6 +193,58 @@ Deno.serve(async (req: Request) => {
   }
 
   // ---------------------------------------------------------------------------
+  // Post to Slack (optional)
+  // ---------------------------------------------------------------------------
+  let slackSent = false
+
+  if (payload.postToSlack === true) {
+    const slackWebhookUrl = Deno.env.get('SLACK_WEBHOOK_URL')
+    if (slackWebhookUrl) {
+      const ctaUrl = payload.contentType === 'schedule' ? scheduleDownloadUrl : payload.contentUrl
+      const blocks: unknown[] = [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: [
+              `*${slackContentLabel(payload.contentType)}*`,
+              `*${payload.contentTitle}*`,
+              payload.contentSummary ?? '',
+            ].filter(Boolean).join('\n'),
+          },
+        },
+      ]
+      if (ctaUrl) {
+        blocks.push({
+          type: 'actions',
+          elements: [
+            {
+              type: 'button',
+              text: { type: 'plain_text', text: `View ${contentLabel(payload.contentType)}` },
+              url: ctaUrl,
+            },
+          ],
+        })
+      }
+      try {
+        const slackRes = await fetch(slackWebhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ blocks }),
+        })
+        slackSent = slackRes.ok
+        if (!slackRes.ok) {
+          console.error('Slack webhook failed:', slackRes.status, await slackRes.text())
+        }
+      } catch (err) {
+        console.error('Slack webhook threw:', err)
+      }
+    } else {
+      console.warn('postToSlack was true but SLACK_WEBHOOK_URL is not configured')
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Build email
   // ---------------------------------------------------------------------------
   const html = buildHtml(payload, scheduleDownloadUrl)
@@ -242,7 +296,7 @@ Deno.serve(async (req: Request) => {
     sent_count: sent,
   })
 
-  return json({ sent, failed }, 200)
+  return json({ sent, failed, slackSent }, 200)
 })
 
 // ---------------------------------------------------------------------------
@@ -331,6 +385,16 @@ function buildHtml(payload: NotificationPayload, scheduleDownloadUrl?: string): 
   </table>
 </body>
 </html>`
+}
+
+function slackContentLabel(type: string): string {
+  const labels: Record<string, string> = {
+    news:     '📰  Club News',
+    event:    '📅  Club Event',
+    document: '📄  Club Document',
+    schedule: '🏋️  Training Schedule',
+  }
+  return labels[type] ?? type
 }
 
 function contentLabel(type: string): string {

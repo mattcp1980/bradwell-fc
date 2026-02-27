@@ -4,7 +4,7 @@ import type { NotificationPayload } from '@/types'
 
 export function useSendNotification() {
   return useMutation({
-    mutationFn: async (payload: NotificationPayload): Promise<{ sent: number; failed: string[] }> => {
+    mutationFn: async (payload: NotificationPayload): Promise<{ sent: number; failed: string[]; slackSent: boolean }> => {
       const { data: { session } } = await supabase.auth.getSession()
 
       const res = await fetch(

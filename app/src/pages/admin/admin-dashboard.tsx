@@ -529,7 +529,7 @@ function OfficialsSection() {
       )}
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add club official</DialogTitle>
             <DialogDescription>Enter the official's details below.</DialogDescription>
@@ -544,7 +544,7 @@ function OfficialsSection() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit official</DialogTitle>
             <DialogDescription>Update the official's details below.</DialogDescription>

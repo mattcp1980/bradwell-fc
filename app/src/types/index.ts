@@ -163,4 +163,6 @@ export interface NotificationPayload {
   /** Base64-encoded PDF — only present for contentType='schedule' */
   pdfBase64?: string
   pdfFilename?: string
+  /** When true the edge function will POST to the configured Slack Incoming Webhook */
+  postToSlack?: boolean
 }

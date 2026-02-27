@@ -10,7 +10,7 @@
  */
 
 import { useState, useMemo } from 'react'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, Slack } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -55,6 +55,7 @@ export function NotifyModal({
   const send = useSendNotification()
 
   const [subject, setSubject] = useState(contentTitle)
+  const [postToSlack, setPostToSlack] = useState(false)
   const [scopeType, setScopeType] = useState<ScopeType>('everyone')
   const [teamName, setTeamName] = useState('')
   const [ageGroup, setAgeGroup] = useState('')
@@ -106,11 +107,20 @@ export function NotifyModal({
       scope: buildScope(),
       pdfBase64,
       pdfFilename,
+      postToSlack,
     }
 
     send.mutate(payload, {
       onSuccess: (data) => {
-        toast.success(`Sent to ${data.sent} ${data.sent === 1 ? 'person' : 'people'}`)
+        const emailPart = `Sent to ${data.sent} ${data.sent === 1 ? 'person' : 'people'}`
+        const slackPart = postToSlack
+          ? data.slackSent ? ' · Posted to Slack' : ' · Slack post failed'
+          : ''
+        if (postToSlack && !data.slackSent) {
+          toast.warning(`${emailPart}${slackPart}`)
+        } else {
+          toast.success(`${emailPart}${slackPart}`)
+        }
         onClose()
       },
       onError: (err) => {
@@ -126,7 +136,7 @@ export function NotifyModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose() } }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="font-heading uppercase tracking-wide text-base">
@@ -259,6 +269,35 @@ export function NotifyModal({
               : `${recipientCount} ${recipientCount === 1 ? 'person' : 'people'} will receive this email`}
           </p>
 
+          {/* Slack toggle */}
+          <div className="rounded-md border border-border px-3 py-2.5 space-y-2">
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={postToSlack}
+                onChange={(e) => setPostToSlack(e.target.checked)}
+                className="rounded border-border"
+              />
+              <Slack size={14} className="text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium">Also post to Slack</span>
+            </label>
+            {postToSlack && (
+              <div className="rounded bg-muted/50 px-2.5 py-2 text-xs text-muted-foreground space-y-0.5">
+                <p className="font-medium text-foreground">Slack preview</p>
+                <p>{slackLabelFor(contentType)}</p>
+                <p className="font-medium text-foreground truncate">{contentTitle}</p>
+                {contentSummary && <p className="line-clamp-2">{contentSummary}</p>}
+                {(contentUrl || contentType === 'schedule') && (
+                  <p className="italic">
+                    {contentType === 'schedule'
+                      ? 'Button: Download Training Schedule (PDF)'
+                      : `Button: View ${contentLabelFor(contentType)}`}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Actions */}
           <div className="flex items-center justify-end gap-2 pt-1">
             <Button variant="outline" size="sm" onClick={onClose} disabled={send.isPending}>
@@ -279,4 +318,22 @@ export function NotifyModal({
       </DialogContent>
     </Dialog>
   )
+}
+
+function slackLabelFor(type: 'news' | 'event' | 'document' | 'schedule'): string {
+  return {
+    news:     '📰  Club News',
+    event:    '📅  Club Event',
+    document: '📄  Club Document',
+    schedule: '🏋️  Training Schedule',
+  }[type]
+}
+
+function contentLabelFor(type: 'news' | 'event' | 'document' | 'schedule'): string {
+  return {
+    news:     'Club News',
+    event:    'Club Event',
+    document: 'Club Document',
+    schedule: 'Training Schedule',
+  }[type]
 }
