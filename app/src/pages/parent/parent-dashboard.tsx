@@ -151,10 +151,7 @@ export function ParentDashboard() {
               </section>
 
               {/* Coach FAQs */}
-              <FaqSection audience="coaches" title="Coach FAQs" />
-
-              {/* Parent FAQs */}
-              <FaqSection audience="parents" title="Parent FAQs" />
+              <FaqSection audience="coaches" title="FAQs" />
 
             </div>
 

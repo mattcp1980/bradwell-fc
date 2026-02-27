@@ -1,6 +1,6 @@
--- FAQ items for the coach portal
--- audience: 'coaches' — shown to officials on the Coach Hub
--- audience: 'parents' — parent-facing content shown on the Coach Hub
+-- FAQ items for the coach portal and parents hub
+-- audience: 'coaches' — shown to officials on the Coach Hub (authenticated only)
+-- audience: 'parents' — shown publicly on the Parents Hub
 -- display_order: lower = earlier in list
 
 create table public.faqs (
@@ -13,6 +13,10 @@ create table public.faqs (
 );
 
 alter table public.faqs enable row level security;
+
+create policy "Public can read parent faqs"
+  on public.faqs for select
+  using (audience = 'parents');
 
 create policy "Authenticated users can read faqs"
   on public.faqs for select
