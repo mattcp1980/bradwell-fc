@@ -1,10 +1,63 @@
-import { ExternalLink, FileText, Calendar, ChevronRight, AlertCircle, Clock, MapPin } from "lucide-react";
+import { ExternalLink, FileText, Calendar, ChevronRight, AlertCircle, Clock, MapPin, HelpCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { useCoachDocuments } from "@/hooks/use-documents";
 import { useAuth } from "@/hooks/use-auth";
 import { useMyTeamIds } from "@/hooks/use-officials";
 import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
 import { useRequiredEvents } from "@/hooks/use-events";
+import { useFaqs } from "@/hooks/use-faqs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+function FaqSection({ audience, title }: { audience: 'coaches' | 'parents'; title: string }) {
+  const { data: faqs = [], isLoading } = useFaqs(audience)
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+        <HelpCircle className="text-primary" size={18} />
+        <h2 className="font-heading text-base uppercase tracking-wider">{title}</h2>
+      </div>
+      <div className="px-6 py-2">
+        {isLoading && (
+          <div className="py-4 space-y-3">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="space-y-1.5">
+                <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+              </div>
+            ))}
+          </div>
+        )}
+        {!isLoading && faqs.length === 0 && (
+          <p className="py-8 text-sm text-muted-foreground text-center">
+            No FAQs available yet.
+          </p>
+        )}
+        {!isLoading && faqs.length > 0 && (
+          <Accordion type="multiple" className="w-full">
+            {faqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id}>
+                <AccordionTrigger className="text-sm text-left">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {faq.answer}
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
+      </div>
+    </section>
+  )
+}
 
 export function ParentDashboard() {
   const { user } = useAuth();
@@ -96,6 +149,13 @@ export function ParentDashboard() {
                   )}
                 </div>
               </section>
+
+              {/* Coach FAQs */}
+              <FaqSection audience="coaches" title="Coach FAQs" />
+
+              {/* Parent FAQs */}
+              <FaqSection audience="parents" title="Parent FAQs" />
+
             </div>
 
             {/* Sidebar */}

@@ -166,3 +166,20 @@ export interface NotificationPayload {
   /** When true the edge function will POST to the configured Slack Incoming Webhook */
   postToSlack?: boolean
 }
+
+// ---------------------------------------------------------------------------
+// FAQs
+// ---------------------------------------------------------------------------
+
+export type FaqAudience = 'coaches' | 'parents'
+
+export interface Faq {
+  id: string
+  question: string
+  answer: string
+  audience: FaqAudience
+  display_order: number
+  created_at: string
+}
+
+export type FaqInput = Omit<Faq, 'id' | 'created_at'>

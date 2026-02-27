@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp, Copy, Bell } from "lucide-react";
+import { Newspaper, Calendar, FileText, Plus, Pencil, Trash2, Upload, Users, Star, Shield, LayoutTemplate, Save, Loader2, AlertCircle, CalendarDays, ChevronDown, ChevronUp, Copy, Bell, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { NewsForm } from "@/components/shared/news-form";
 import { DocumentForm } from "@/components/shared/document-form";
 import { TrainingScheduleBuilder } from "@/components/shared/training-schedule-builder";
 import { EventForm } from "@/components/shared/event-form";
+import { FaqForm } from "@/components/shared/faq-form";
 import { NotifyModal } from "@/components/shared/notify-modal";
 import { useOfficials, useAddOfficial, useUpdateOfficial, useDeleteOfficial } from "@/hooks/use-officials";
 import { useTeams, useAddTeam, useUpdateTeam, useDeleteTeam } from "@/hooks/use-teams";
@@ -21,11 +22,12 @@ import { useAllNews, useAddNews, useUpdateNews, useDeleteNews } from "@/hooks/us
 import { useDocuments, useAddDocument, useDeleteDocument } from "@/hooks/use-documents";
 import { useSiteContent, useUpdateSiteContent } from "@/hooks/use-site-content";
 import { useAllEvents, useAddEvent, useUpdateEvent, useDeleteEvent } from "@/hooks/use-events";
+import { useAllFaqs, useAddFaq, useUpdateFaq, useDeleteFaq } from "@/hooks/use-faqs";
 import { useAuth } from "@/hooks/use-auth";
 import { format, parseISO } from "date-fns";
-import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput, ClubEvent, ClubEventInput } from "@/types";
+import type { ClubOfficial, ClubOfficialInput, TeamInput, TeamWithContact, NewsPost, NewsPostInput, Document, DocumentInput, ClubEvent, ClubEventInput, Faq, FaqInput } from "@/types";
 
-type AdminSection = "news" | "events" | "training" | "documents" | "officials" | "teams" | "site-content";
+type AdminSection = "news" | "events" | "training" | "documents" | "officials" | "teams" | "site-content" | "faqs";
 
 
 const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = [
@@ -36,6 +38,7 @@ const navItems: { id: AdminSection; label: string; icon: typeof Newspaper }[] = 
   { id: "teams", label: "Teams", icon: Shield },
   { id: "officials", label: "Club Officials", icon: Users },
   { id: "site-content", label: "Site Content", icon: LayoutTemplate },
+  { id: "faqs", label: "FAQs", icon: HelpCircle },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1057,6 +1060,186 @@ function SiteContentSection() {
 }
 
 // ---------------------------------------------------------------------------
+// FAQs section
+// ---------------------------------------------------------------------------
+
+function FaqsSection() {
+  const { data: allFaqs = [], isLoading } = useAllFaqs()
+  const addFaq = useAddFaq()
+  const updateFaq = useUpdateFaq()
+  const deleteFaq = useDeleteFaq()
+
+  const coachFaqs = allFaqs.filter((f) => f.audience === 'coaches')
+  const parentFaqs = allFaqs.filter((f) => f.audience === 'parents')
+
+  const [addCoachOpen, setAddCoachOpen] = useState(false)
+  const [addParentOpen, setAddParentOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Faq | null>(null)
+
+  function nextOrder(audience: 'coaches' | 'parents') {
+    const list = audience === 'coaches' ? coachFaqs : parentFaqs
+    if (list.length === 0) return 0
+    return Math.max(...list.map((f) => f.display_order)) + 1
+  }
+
+  function handleAdd(audience: 'coaches' | 'parents', input: FaqInput) {
+    const fullInput: FaqInput = { ...input, audience, display_order: input.display_order }
+    addFaq.mutate(fullInput, {
+      onSuccess: () => {
+        if (audience === 'coaches') setAddCoachOpen(false)
+        else setAddParentOpen(false)
+      },
+    })
+  }
+
+  function handleUpdate(input: FaqInput) {
+    if (!editTarget) return
+    updateFaq.mutate({ id: editTarget.id, input }, { onSuccess: () => setEditTarget(null) })
+  }
+
+  function handleDelete(id: string) {
+    if (!confirm('Delete this FAQ? This cannot be undone.')) return
+    deleteFaq.mutate(id)
+  }
+
+  function FaqSubSection({
+    title,
+    faqs,
+    audience,
+    onAdd,
+  }: {
+    title: string
+    faqs: Faq[]
+    audience: 'coaches' | 'parents'
+    onAdd: () => void
+  }) {
+    return (
+      <section className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <h2 className="font-heading text-base uppercase tracking-wider">{title}</h2>
+            <AudienceBadge audience={audience} />
+          </div>
+          <Button size="sm" className="gap-1.5" onClick={onAdd}>
+            <Plus size={14} />
+            Add FAQ
+          </Button>
+        </div>
+
+        {isLoading && (
+          <p className="px-6 py-8 text-sm text-muted-foreground text-center">Loading…</p>
+        )}
+        {!isLoading && faqs.length === 0 && (
+          <p className="px-6 py-8 text-sm text-muted-foreground text-center">
+            No FAQs yet. Click "Add FAQ" to get started.
+          </p>
+        )}
+        {!isLoading && faqs.length > 0 && (
+          <div className="divide-y divide-border">
+            {faqs.map((faq) => (
+              <div key={faq.id} className="px-6 py-4 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground line-clamp-2">{faq.question}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Order: {faq.display_order}</p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => setEditTarget(faq)}
+                    title="Edit"
+                  >
+                    <Pencil size={14} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDelete(faq.id)}
+                    title="Delete"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <FaqSubSection
+        title="Coach FAQs"
+        faqs={coachFaqs}
+        audience="coaches"
+        onAdd={() => setAddCoachOpen(true)}
+      />
+      <FaqSubSection
+        title="Parent FAQs"
+        faqs={parentFaqs}
+        audience="parents"
+        onAdd={() => setAddParentOpen(true)}
+      />
+
+      {/* Add Coach FAQ */}
+      <Dialog open={addCoachOpen} onOpenChange={setAddCoachOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Coach FAQ</DialogTitle>
+            <DialogDescription>Add a frequently asked question for coaches.</DialogDescription>
+          </DialogHeader>
+          <FaqForm
+            showAudienceAndOrder
+            onSubmit={(input) => handleAdd('coaches', { ...input, audience: 'coaches', display_order: input.display_order ?? nextOrder('coaches') })}
+            onCancel={() => setAddCoachOpen(false)}
+            isPending={addFaq.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Parent FAQ */}
+      <Dialog open={addParentOpen} onOpenChange={setAddParentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Parent FAQ</DialogTitle>
+            <DialogDescription>Add a frequently asked question for parents.</DialogDescription>
+          </DialogHeader>
+          <FaqForm
+            showAudienceAndOrder
+            onSubmit={(input) => handleAdd('parents', { ...input, audience: 'parents', display_order: input.display_order ?? nextOrder('parents') })}
+            onCancel={() => setAddParentOpen(false)}
+            isPending={addFaq.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit FAQ */}
+      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit FAQ</DialogTitle>
+            <DialogDescription>Update the question and answer below.</DialogDescription>
+          </DialogHeader>
+          {editTarget && (
+            <FaqForm
+              defaultValues={editTarget}
+              showAudienceAndOrder
+              onSubmit={handleUpdate}
+              onCancel={() => setEditTarget(null)}
+              isPending={updateFaq.isPending}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main dashboard
 // ---------------------------------------------------------------------------
 
@@ -1134,6 +1317,9 @@ export function AdminDashboard() {
 
               {/* Site content */}
               {activeSection === "site-content" && <SiteContentSection />}
+
+              {/* FAQs */}
+              {activeSection === "faqs" && <FaqsSection />}
 
             </div>
           </div>
