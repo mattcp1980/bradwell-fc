@@ -34,6 +34,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      fixtures: {
+        Row: {
+          id: string
+          date: string
+          opponent: string
+          home: boolean
+          venue: string | null
+          result: Json | null
+          competition: string | null
+        }
+        Insert: {
+          id?: string
+          date: string
+          opponent: string
+          home?: boolean
+          venue?: string | null
+          result?: Json | null
+          competition?: string | null
+        }
+        Update: {
+          id?: string
+          date?: string
+          opponent?: string
+          home?: boolean
+          venue?: string | null
+          result?: Json | null
+          competition?: string | null
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          id: string
+          question: string
+          answer: string
+          audience: string
+          display_order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          question: string
+          answer: string
+          audience: string
+          display_order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          question?: string
+          answer?: string
+          audience?: string
+          display_order?: number
+          created_at?: string
+        }
+        Relationships: []
+      }
       club_officials: {
         Row: {
           created_at: string
@@ -483,6 +540,8 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export type UserRole = 'coach' | 'admin'
 
 export const Constants = {
   graphql_public: {

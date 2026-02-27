@@ -12,7 +12,7 @@ export function useFixtures() {
         .order('date', { ascending: true })
 
       if (error) throw error
-      return data ?? []
+      return (data ?? []) as Fixture[]
     },
   })
 }
@@ -30,7 +30,7 @@ export function useUpcomingFixtures(limit = 5) {
         .limit(limit)
 
       if (error) throw error
-      return data ?? []
+      return (data ?? []) as Fixture[]
     },
   })
 }
