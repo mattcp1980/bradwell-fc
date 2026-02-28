@@ -79,6 +79,7 @@ export function NotifyModal({
       const teamNames = teams.filter((t) => t.age_group === ageGroup).map((t) => t.name)
       return officials.filter((o) => o.teams.some((t) => teamNames.includes(t))).length
     }
+    if (scopeType === 'team_primary_contacts') return officials.filter((o) => o.is_primary_contact).length
     if (scopeType === 'individuals') return selectedIds.length
     return 0
   }, [scopeType, teamName, ageGroup, selectedIds, officials, teams])
@@ -185,6 +186,7 @@ export function NotifyModal({
               <option value="everyone">Everyone (all officials)</option>
               <option value="admins">All admins</option>
               <option value="coaches">All coaches</option>
+              <option value="team_primary_contacts">Team primary contacts</option>
               <option value="team">Coaches — specific team</option>
               <option value="age_group">Coaches — specific age group</option>
               <option value="individuals">Specific individuals</option>

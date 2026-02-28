@@ -28,7 +28,7 @@ const corsHeaders = {
 // Types (mirrored from frontend — edge functions can't import from src/)
 // ---------------------------------------------------------------------------
 
-type ScopeType = 'everyone' | 'admins' | 'coaches' | 'team' | 'age_group' | 'individuals'
+type ScopeType = 'everyone' | 'admins' | 'coaches' | 'team_primary_contacts' | 'team' | 'age_group' | 'individuals'
 
 interface NotificationScope {
   type: ScopeType
@@ -124,6 +124,10 @@ Deno.serve(async (req: Request) => {
 
   } else if (scope.type === 'coaches') {
     const { data } = await supabase.from('club_officials').select('email').eq('role', 'coach')
+    recipientEmails = (data ?? []).map((r: { email: string }) => r.email)
+
+  } else if (scope.type === 'team_primary_contacts') {
+    const { data } = await supabase.from('club_officials').select('email').eq('is_primary_contact', true)
     recipientEmails = (data ?? []).map((r: { email: string }) => r.email)
 
   } else if (scope.type === 'team' && scope.teamName) {

@@ -148,6 +148,7 @@ export type NotificationScope =
   | { type: 'everyone' }
   | { type: 'admins' }
   | { type: 'coaches' }
+  | { type: 'team_primary_contacts' }
   | { type: 'team'; teamName: string }
   | { type: 'age_group'; ageGroup: string }
   | { type: 'individuals'; officialIds: string[] }
