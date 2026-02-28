@@ -18,6 +18,26 @@ export function usePublishedNews() {
         .from('news_posts')
         .select('*')
         .or(`status.eq.published,and(status.eq.scheduled,scheduled_at.lte.${now})`)
+        .eq('coaches_only', false)
+        .order('created_at', { ascending: false })
+
+      if (error) return []
+      return (data ?? []) as NewsPost[]
+    },
+  })
+}
+
+/** Coach Hub query — returns published/live-scheduled coaches-only posts, newest first. */
+export function useCoachesNews() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'coaches'],
+    queryFn: async (): Promise<NewsPost[]> => {
+      const now = new Date().toISOString()
+      const { data, error } = await supabase
+        .from('news_posts')
+        .select('*')
+        .eq('coaches_only', true)
+        .or(`status.eq.published,and(status.eq.scheduled,scheduled_at.lte.${now})`)
         .order('created_at', { ascending: false })
 
       if (error) return []

@@ -206,6 +206,7 @@ export type Database = {
         Row: {
           author_id: string
           body: string
+          coaches_only: boolean
           cover_image_url: string | null
           created_at: string
           excerpt: string
@@ -220,6 +221,7 @@ export type Database = {
         Insert: {
           author_id: string
           body?: string
+          coaches_only?: boolean
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string
@@ -234,6 +236,7 @@ export type Database = {
         Update: {
           author_id?: string
           body?: string
+          coaches_only?: boolean
           cover_image_url?: string | null
           created_at?: string
           excerpt?: string

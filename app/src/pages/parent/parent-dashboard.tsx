@@ -1,4 +1,5 @@
-import { ExternalLink, FileText, Calendar, ChevronRight, AlertCircle, Clock, MapPin, HelpCircle } from "lucide-react";
+import { ExternalLink, FileText, Calendar, ChevronRight, AlertCircle, Clock, MapPin, HelpCircle, Newspaper } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { useCoachDocuments } from "@/hooks/use-documents";
 import { useAuth } from "@/hooks/use-auth";
@@ -6,12 +7,53 @@ import { useMyTeamIds } from "@/hooks/use-officials";
 import { TrainingScheduleView } from "@/components/shared/training-schedule-view";
 import { useRequiredEvents } from "@/hooks/use-events";
 import { useFaqs } from "@/hooks/use-faqs";
+import { useCoachesNews } from "@/hooks/use-news";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+
+function CoachUpdatesSection() {
+  const { data: posts = [], isLoading } = useCoachesNews()
+
+  if (!isLoading && posts.length === 0) return null
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
+        <Newspaper className="text-primary" size={18} />
+        <h2 className="font-heading text-base uppercase tracking-wider">Club Updates</h2>
+      </div>
+      <div className="divide-y divide-border">
+        {isLoading && [1, 2].map((n) => (
+          <div key={n} className="px-6 py-4 space-y-1.5">
+            <div className="h-3 bg-muted rounded animate-pulse w-2/3" />
+            <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+          </div>
+        ))}
+        {!isLoading && posts.map((post) => (
+          <Link
+            key={post.id}
+            to={`/news/${post.id}`}
+            className="px-6 py-4 flex flex-col gap-1 hover:bg-muted/30 transition-colors group"
+          >
+            <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+              {post.title}
+            </p>
+            {post.excerpt && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{post.excerpt}</p>
+            )}
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {format(new Date(post.created_at), 'd MMM yyyy')}
+            </p>
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 function FaqSection({ audience, title }: { audience: 'coaches' | 'parents'; title: string }) {
   const { data: faqs = [], isLoading } = useFaqs(audience)
@@ -88,6 +130,9 @@ export function ParentDashboard() {
 
             {/* Main content */}
             <div className="lg:col-span-2 space-y-6">
+
+              {/* Coaches-only club updates */}
+              <CoachUpdatesSection />
 
               {/* Training schedule */}
               <section className="bg-card border border-border rounded-lg overflow-hidden">

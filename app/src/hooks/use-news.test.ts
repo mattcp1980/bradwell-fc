@@ -66,6 +66,7 @@ const mockPost: NewsPost = {
   scheduled_at: null,
   author_id: 'user-xyz-456',
   post_to_facebook: false,
+  coaches_only: false,
   created_at: '2026-02-25T10:00:00Z',
   updated_at: '2026-02-25T10:00:00Z',
 }
@@ -147,6 +148,7 @@ describe('useAddNews', () => {
       images: [],
       author_id: 'user-xyz-456',
       post_to_facebook: false,
+      coaches_only: false,
     })
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))

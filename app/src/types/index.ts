@@ -35,6 +35,7 @@ export interface NewsPost {
   scheduled_at: string | null
   author_id: string
   post_to_facebook: boolean
+  coaches_only: boolean
   created_at: string
   updated_at: string
 }

@@ -2,13 +2,15 @@ import { useParams, Link } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ArrowLeft } from 'lucide-react'
 import { useNewsArticle } from '@/hooks/use-news'
+import { useAuth } from '@/hooks/use-auth'
 import { NewsShareButtons } from '@/components/shared/news-share-buttons'
 
 export function NewsArticlePage() {
   const { id } = useParams<{ id: string }>()
   const { data: post, isLoading } = useNewsArticle(id)
+  const { user, loading: authLoading } = useAuth()
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="pt-24 pb-20">
         <div className="container px-4">
@@ -28,7 +30,7 @@ export function NewsArticlePage() {
     )
   }
 
-  if (!post) {
+  if (!post || (post.coaches_only && !user)) {
     return (
       <div className="pt-24 pb-20">
         <div className="container px-4 text-center">

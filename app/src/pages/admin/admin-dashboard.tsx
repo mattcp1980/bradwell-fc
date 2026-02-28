@@ -119,6 +119,11 @@ function NewsSection() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <StatusBadge status={post.status} />
+                  {post.coaches_only && (
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      Coaches only
+                    </span>
+                  )}
                   {post.status === 'scheduled' && post.scheduled_at && (
                     <span className="text-xs text-muted-foreground">
                       {format(new Date(post.scheduled_at), 'd MMM yyyy, HH:mm')}

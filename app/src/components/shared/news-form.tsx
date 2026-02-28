@@ -21,6 +21,7 @@ const newsSchema = z.object({
   images: z.array(z.string()),
   author_id: z.string(),
   post_to_facebook: z.boolean(),
+  coaches_only: z.boolean(),
 }).refine(
   (data) => data.status !== 'scheduled' || (data.scheduled_at !== null && data.scheduled_at !== ''),
   { message: 'Publish date is required when status is "Scheduled"', path: ['scheduled_at'] }
@@ -53,6 +54,7 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
       images: defaultValues?.images ?? [],
       author_id: authorId,
       post_to_facebook: defaultValues?.post_to_facebook ?? false,
+      coaches_only: defaultValues?.coaches_only ?? false,
     },
   })
 
@@ -85,6 +87,7 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
           images: extraUrls,
           author_id: authorId,
           post_to_facebook: values.post_to_facebook,
+          coaches_only: values.coaches_only,
         },
         clientId
       )
@@ -157,6 +160,29 @@ export function NewsForm({ defaultValues, authorId, onSubmit, onCancel, isPendin
                   </FormControl>
                   <FormLabel htmlFor="post_to_facebook" className="text-sm font-normal cursor-pointer">
                     Include in Facebook RSS feed
+                  </FormLabel>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="coaches_only"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      id="coaches_only"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      className="rounded border-border"
+                    />
+                  </FormControl>
+                  <FormLabel htmlFor="coaches_only" className="text-sm font-normal cursor-pointer">
+                    Coaches only (hidden from public)
                   </FormLabel>
                 </div>
               </FormItem>
