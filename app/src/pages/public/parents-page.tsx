@@ -12,57 +12,14 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-function FaqSection() {
-  const { data: faqs = [], isLoading } = useFaqs('parents')
-
-  if (!isLoading && faqs.length === 0) return null
-
-  return (
-    <div className="md:col-span-2 lg:col-span-3">
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
-          <HelpCircle className="text-primary" size={22} />
-          <h3 className="font-heading text-lg uppercase text-foreground">FAQs</h3>
-        </div>
-        <div className="px-6 py-2">
-          {isLoading && (
-            <div className="py-4 space-y-3">
-              {[1, 2, 3].map((n) => (
-                <div key={n} className="space-y-1.5">
-                  <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
-                  <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
-                </div>
-              ))}
-            </div>
-          )}
-          {!isLoading && faqs.length > 0 && (
-            <Accordion type="multiple" className="w-full">
-              {faqs.map((faq) => (
-                <AccordionItem key={faq.id} value={faq.id}>
-                  <AccordionTrigger className="text-sm text-left">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                      {faq.answer}
-                    </p>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export function ParentsPage() {
   const { data: content = {} } = useSiteContent();
   const g = (key: string, fallback: string) => content[key] || fallback;
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
+  const [faqsOpen, setFaqsOpen] = useState(false);
   const { data: documents = [], isLoading: docsLoading } = useParentDocuments();
+  const { data: faqs = [], isLoading: faqsLoading } = useFaqs('parents');
 
   const paymentUrl = g('parents_make_a_payment_url', 'https://bradwell-fc.hivelink.co.uk/451/');
 
@@ -174,7 +131,57 @@ export function ParentsPage() {
             )}
           </div>
 
-          <FaqSection />
+          {(faqsLoading || faqs.length > 0) && (
+            <div
+              className={`bg-card border border-border rounded-lg transition-all ${faqsOpen ? 'md:col-span-2 lg:col-span-3' : ''}`}
+            >
+              <button
+                onClick={() => setFaqsOpen((o) => !o)}
+                className="w-full text-left p-6 flex items-start justify-between gap-4 group"
+              >
+                <div>
+                  <HelpCircle className="text-primary mb-3" size={28} />
+                  <h3 className="font-heading text-lg uppercase text-foreground mb-2">FAQs</h3>
+                  <p className="text-muted-foreground text-sm">
+                    Answers to common questions about Bradwell FC. Click to expand.
+                  </p>
+                </div>
+                <span className="text-primary mt-1 shrink-0">
+                  {faqsOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </span>
+              </button>
+              {faqsOpen && (
+                <div className="border-t border-border px-6 py-2">
+                  {faqsLoading && (
+                    <div className="py-4 space-y-3">
+                      {[1, 2, 3].map((n) => (
+                        <div key={n} className="space-y-1.5">
+                          <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                          <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {!faqsLoading && (
+                    <Accordion type="multiple" className="w-full">
+                      {faqs.map((faq) => (
+                        <AccordionItem key={faq.id} value={faq.id}>
+                          <AccordionTrigger className="text-sm text-left">
+                            {faq.question}
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                              {faq.answer}
+                            </p>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-card border border-border rounded-lg p-6">
             <MapPin className="text-primary mb-3" size={28} />
