@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { UserRole } from '@/types'
@@ -7,10 +8,12 @@ interface AuthState {
   user: User | null
   role: UserRole | null  // null = authenticated but no recognised role
   loading: boolean
+  signOut: () => Promise<void>
 }
 
 export function useAuth(): AuthState {
-  const [state, setState] = useState<AuthState>({
+  const navigate = useNavigate()
+  const [state, setState] = useState<Omit<AuthState, 'signOut'>>({
     user: null,
     role: null,
     loading: true,
@@ -56,5 +59,10 @@ export function useAuth(): AuthState {
     })
   }
 
-  return state
+  async function signOut() {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+
+  return { ...state, signOut }
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import clubBadge from "@/assets/club-badge.jpg";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -15,7 +15,7 @@ const navItems = [
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user, role, signOut } = useAuth();
 
   const authButtons = () => {
     if (!user) {
@@ -42,7 +42,7 @@ export function Header() {
     }
 
     if (role === 'admin') {
-      // Admin — direct links to both areas
+      // Admin — direct links to both areas + logout
       return (
         <>
           <Button
@@ -60,21 +60,41 @@ export function Header() {
           >
             Admin
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-2 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={signOut}
+            title="Log out"
+          >
+            <LogOut size={14} />
+          </Button>
         </>
       )
     }
 
     if (role === 'coach') {
-      // Coach — direct link to portal only
+      // Coach — direct link to portal + logout
       return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
-          onClick={() => navigate("/portal")}
-        >
-          Portal
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-4 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => navigate("/portal")}
+          >
+            Portal
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-2 border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={signOut}
+            title="Log out"
+          >
+            <LogOut size={14} />
+          </Button>
+        </>
       )
     }
 
@@ -122,20 +142,40 @@ export function Header() {
           >
             Admin
           </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => { setMobileOpen(false); void signOut(); }}
+          >
+            <LogOut size={14} className="mr-1.5" />
+            Log out
+          </Button>
         </>
       )
     }
 
     if (role === 'coach') {
       return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
-          onClick={() => { setMobileOpen(false); navigate("/portal"); }}
-        >
-          Portal
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => { setMobileOpen(false); navigate("/portal"); }}
+          >
+            Portal
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 w-fit border border-white/30 text-white hover:bg-white/10 hover:text-white"
+            onClick={() => { setMobileOpen(false); void signOut(); }}
+          >
+            <LogOut size={14} className="mr-1.5" />
+            Log out
+          </Button>
+        </>
       )
     }
 
