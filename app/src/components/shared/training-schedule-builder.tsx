@@ -655,7 +655,12 @@ export function TrainingScheduleBuilder() {
                     className="rounded border border-primary px-2 py-0.5 text-sm font-semibold focus:outline-none"
                   />
                 ) : (
-                  <span className="font-semibold text-sm text-foreground truncate">{schedule.name}</span>
+                  <span className="font-semibold text-sm text-foreground truncate">
+                    {schedule.name}
+                    {schedule.status !== 'published' && (
+                      <span className="ml-1.5 text-muted-foreground font-normal">(DRAFT)</span>
+                    )}
+                  </span>
                 )}
                 <StatusBadge status={schedule.status} />
               </button>
