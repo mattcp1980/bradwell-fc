@@ -52,7 +52,7 @@ function drawCell(
 
 // ── Core builder — returns the jsPDF document ─────────────────────────────────
 
-function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[]): jsPDF {
+function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[], isDraft = false): jsPDF {
   // 1. Derive unique venues, sorted alphabetically
   const venueSet = new Set(slots.map((s) => s.venue).filter(Boolean) as string[])
   const venueOrder: string[] = venueSet.size > 0 ? [...venueSet].sort((a, b) => a.localeCompare(b)) : ['–']
@@ -71,7 +71,8 @@ function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[]): 
   doc.setFontSize(14)
   doc.setFont('helvetica', 'bold')
   setText(doc, TEXT_DARK)
-  doc.text(scheduleName, pageW / 2, PAGE_MARGIN + 5, { align: 'center' })
+  const titleText = isDraft ? `${scheduleName} (DRAFT)` : scheduleName
+  doc.text(titleText, pageW / 2, PAGE_MARGIN + 5, { align: 'center' })
 
   // 4. Header row
   let y = PAGE_MARGIN + TITLE_H
@@ -181,9 +182,10 @@ function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[]): 
 /** Triggers a browser download of the schedule as a PDF file. */
 export function generateSchedulePdf(
   scheduleName: string,
-  slots: TrainingSlotWithTeam[]
+  slots: TrainingSlotWithTeam[],
+  isDraft = false
 ): void {
-  const doc = buildScheduleDoc(scheduleName, slots)
+  const doc = buildScheduleDoc(scheduleName, slots, isDraft)
   const filename = `${scheduleName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
   doc.save(filename)
 }
@@ -194,9 +196,10 @@ export function generateSchedulePdf(
  */
 export function generateSchedulePdfBase64(
   scheduleName: string,
-  slots: TrainingSlotWithTeam[]
+  slots: TrainingSlotWithTeam[],
+  isDraft = false
 ): string {
-  const doc = buildScheduleDoc(scheduleName, slots)
+  const doc = buildScheduleDoc(scheduleName, slots, isDraft)
   // output('datauristring') returns "data:application/pdf;base64,<data>"
   const dataUri = doc.output('datauristring')
   return dataUri.split(',')[1]

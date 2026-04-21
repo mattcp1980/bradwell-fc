@@ -371,7 +371,7 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
           size="sm"
           variant="outline"
           className="h-8 text-xs gap-1.5"
-          onClick={() => generateSchedulePdf(schedule.name, slots)}
+          onClick={() => generateSchedulePdf(schedule.name, slots, schedule.status !== 'published')}
           disabled={slots.length === 0}
         >
           <Download size={12} /> Download PDF
@@ -523,7 +523,7 @@ function ScheduleNotifier({
   onClose: () => void
 }) {
   const { data: slots = [] } = useTrainingSlots(schedule.id)
-  const pdfBase64 = generateSchedulePdfBase64(schedule.name, slots)
+  const pdfBase64 = generateSchedulePdfBase64(schedule.name, slots, schedule.status !== 'published')
   const pdfFilename = `${schedule.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.pdf`
 
   return (
@@ -655,12 +655,7 @@ export function TrainingScheduleBuilder() {
                     className="rounded border border-primary px-2 py-0.5 text-sm font-semibold focus:outline-none"
                   />
                 ) : (
-                  <span className="font-semibold text-sm text-foreground truncate">
-                    {schedule.name}
-                    {schedule.status !== 'published' && (
-                      <span className="ml-1.5 text-muted-foreground font-normal">(DRAFT)</span>
-                    )}
-                  </span>
+                  <span className="font-semibold text-sm text-foreground truncate">{schedule.name}</span>
                 )}
                 <StatusBadge status={schedule.status} />
               </button>
