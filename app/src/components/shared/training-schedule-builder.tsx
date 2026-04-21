@@ -133,9 +133,11 @@ function AddSlotRow({
 function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
   const upsert = useUpsertSlot()
   const deleteSlot = useDeleteSlot()
+  const { data: allTeams = [] } = useTeams()
   const [dragOver, setDragOver] = useState(false)
   const [editingVenue, setEditingVenue] = useState(false)
   const [venueDraft, setVenueDraft] = useState(slot.venue)
+  const [selectingTeam, setSelectingTeam] = useState(false)
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
@@ -161,6 +163,19 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
       end_time: slot.end_time,
       venue: slot.venue,
       team_id: null,
+    })
+  }
+
+  function handleSelectTeam(teamId: string) {
+    setSelectingTeam(false)
+    upsert.mutate({
+      id: slot.id,
+      schedule_id: slot.schedule_id,
+      day: slot.day,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      venue: slot.venue,
+      team_id: teamId || null,
     })
   }
 
@@ -221,11 +236,28 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
       >
-        {slot.team ? (
-          <span className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/30 text-primary text-xs font-medium rounded px-2 py-0.5">
+        {selectingTeam ? (
+          <select
+            autoFocus
+            className="rounded border border-primary bg-background px-2 py-0.5 text-xs focus:outline-none"
+            defaultValue={slot.team_id ?? ''}
+            onChange={(e) => handleSelectTeam(e.target.value)}
+            onBlur={() => setSelectingTeam(false)}
+          >
+            <option value="">— No team —</option>
+            {allTeams.map((t) => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+        ) : slot.team ? (
+          <span
+            className="inline-flex items-center gap-1.5 bg-primary/10 border border-primary/30 text-primary text-xs font-medium rounded px-2 py-0.5 cursor-pointer hover:bg-primary/20 transition-colors"
+            onClick={() => setSelectingTeam(true)}
+            title="Click to change team"
+          >
             {slot.team.name}
             <button
-              onClick={handleRemoveTeam}
+              onClick={(e) => { e.stopPropagation(); handleRemoveTeam() }}
               className="text-primary/60 hover:text-primary ml-0.5"
               title="Remove team"
             >
@@ -233,9 +265,13 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
             </button>
           </span>
         ) : (
-          <span className={`text-xs italic ${dragOver ? 'text-primary' : 'text-muted-foreground/50'}`}>
-            {dragOver ? 'Drop team here' : 'Drag a team here'}
-          </span>
+          <button
+            className={`text-xs italic transition-colors ${dragOver ? 'text-primary' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}
+            onClick={() => setSelectingTeam(true)}
+            title="Click to select a team"
+          >
+            {dragOver ? 'Drop team here' : 'Drag or click to assign'}
+          </button>
         )}
       </td>
       <td className="px-3 py-2">
@@ -359,103 +395,94 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
         </div>
       )}
 
-      {/* Two-column layout: schedule grid (left) + sticky team palette (right) */}
-      <div className="flex items-start gap-0">
-
-        {/* Schedule grid */}
-        <div className="flex-1 min-w-0">
-          {slotsLoading ? (
-            <p className="px-6 py-6 text-sm text-muted-foreground text-center">Loading slots…</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[500px] text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground w-28">Day</th>
-                    <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground w-40">Time</th>
-                    <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground">Venue / Pitch</th>
-                    <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground">Team</th>
-                    <th className="px-3 py-2 w-10" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {DAYS.map((day) => {
-                    const daySlots = slotsByDay[day]
-                    if (daySlots.length === 0 && addingDay !== day) {
-                      return (
-                        <tr key={day} className="border-b border-border/40">
-                          <td className="px-3 py-2 text-xs text-muted-foreground">{day}</td>
-                          <td colSpan={3} className="px-3 py-2 text-xs text-muted-foreground/40 italic">No sessions</td>
-                          <td className="px-3 py-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-primary"
-                              onClick={() => setAddingDay(day)}
-                              title="Add session"
-                            >
-                              <Plus size={12} />
-                            </Button>
-                          </td>
-                        </tr>
-                      )
-                    }
-
-                    return [
-                      ...daySlots.map((slot) => (
-                        <SlotRow key={slot.id} slot={slot} />
-                      )),
-                      addingDay === day ? (
-                        <AddSlotRow
-                          key={`add-${day}`}
-                          scheduleId={schedule.id}
-                          day={day}
-                          onDone={() => setAddingDay(null)}
-                        />
-                      ) : (
-                        <tr key={`add-btn-${day}`} className="border-b border-border/20">
-                          <td colSpan={5} className="px-3 py-1">
-                            <button
-                              onClick={() => setAddingDay(day)}
-                              className="text-xs text-muted-foreground/50 hover:text-primary flex items-center gap-1 transition-colors"
-                            >
-                              <Plus size={10} /> Add {day} session
-                            </button>
-                          </td>
-                        </tr>
-                      ),
-                    ]
-                  })}
-                </tbody>
-              </table>
+      {/* Sticky team palette */}
+      <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground shrink-0">Teams</p>
+          <p className="text-xs text-muted-foreground/60 shrink-0">Drag into a slot</p>
+          {allTeams.map((team) => (
+            <div
+              key={team.id}
+              draggable
+              onDragStart={(e) => e.dataTransfer.setData('text/plain', team.id)}
+              className="bg-card border border-border text-xs font-medium text-foreground rounded px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none hover:border-primary/50 hover:bg-primary/5 transition-colors"
+            >
+              {team.name}
             </div>
+          ))}
+          {allTeams.length === 0 && (
+            <p className="text-xs text-muted-foreground italic">No teams yet.</p>
           )}
         </div>
-
-        {/* Sticky team palette */}
-        <div className="sticky top-4 w-44 shrink-0 border-l border-border self-start">
-          <div className="px-4 py-4">
-            <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground mb-3">Teams</p>
-            <p className="text-xs text-muted-foreground/60 mb-3">Drag into a slot</p>
-            <div className="flex flex-col gap-2">
-              {allTeams.map((team) => (
-                <div
-                  key={team.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', team.id)}
-                  className="bg-card border border-border text-xs font-medium text-foreground rounded px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none hover:border-primary/50 hover:bg-primary/5 transition-colors text-center"
-                >
-                  {team.name}
-                </div>
-              ))}
-              {allTeams.length === 0 && (
-                <p className="text-xs text-muted-foreground italic">No teams yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      {/* Schedule grid */}
+      {slotsLoading ? (
+        <p className="px-6 py-6 text-sm text-muted-foreground text-center">Loading slots…</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px] text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground w-28">Day</th>
+                <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground w-40">Time</th>
+                <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground">Venue / Pitch</th>
+                <th className="px-3 py-2 text-left text-xs font-heading uppercase tracking-wider text-muted-foreground">Team</th>
+                <th className="px-3 py-2 w-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {DAYS.map((day) => {
+                const daySlots = slotsByDay[day]
+                if (daySlots.length === 0 && addingDay !== day) {
+                  return (
+                    <tr key={day} className="border-b border-border/40">
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{day}</td>
+                      <td colSpan={3} className="px-3 py-2 text-xs text-muted-foreground/40 italic">No sessions</td>
+                      <td className="px-3 py-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => setAddingDay(day)}
+                          title="Add session"
+                        >
+                          <Plus size={12} />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                return [
+                  ...daySlots.map((slot) => (
+                    <SlotRow key={slot.id} slot={slot} />
+                  )),
+                  addingDay === day ? (
+                    <AddSlotRow
+                      key={`add-${day}`}
+                      scheduleId={schedule.id}
+                      day={day}
+                      onDone={() => setAddingDay(null)}
+                    />
+                  ) : (
+                    <tr key={`add-btn-${day}`} className="border-b border-border/20">
+                      <td colSpan={5} className="px-3 py-1">
+                        <button
+                          onClick={() => setAddingDay(day)}
+                          className="text-xs text-muted-foreground/50 hover:text-primary flex items-center gap-1 transition-colors"
+                        >
+                          <Plus size={10} /> Add {day} session
+                        </button>
+                      </td>
+                    </tr>
+                  ),
+                ]
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
