@@ -1301,7 +1301,7 @@ export function AdminDashboard() {
 
               {/* Training timetable */}
               {activeSection === "training" && (
-                <section className="bg-card border border-border rounded-lg overflow-hidden">
+                <section className="bg-card border border-border rounded-lg">
                   <div className="px-6 py-4 border-b border-border">
                     <h2 className="font-heading text-base uppercase tracking-wider">Training Schedule</h2>
                   </div>

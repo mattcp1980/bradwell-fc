@@ -581,7 +581,7 @@ export function TrainingScheduleBuilder() {
         const isRenaming = renamingId === schedule.id
 
         return (
-          <div key={schedule.id} className="bg-card border border-border rounded-lg overflow-hidden">
+          <div key={schedule.id} className="bg-card border border-border rounded-lg">
             {/* Header row */}
             <div className="flex items-center gap-3 px-5 py-4">
               <button
