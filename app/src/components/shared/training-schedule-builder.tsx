@@ -179,6 +179,17 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
     })
   }
 
+  function handleDuplicate() {
+    upsert.mutate({
+      schedule_id: slot.schedule_id,
+      day: slot.day,
+      start_time: slot.start_time,
+      end_time: slot.end_time,
+      venue: slot.venue,
+      team_id: slot.team_id,
+    })
+  }
+
   function handleDelete() {
     deleteSlot.mutate({ id: slot.id, schedule_id: slot.schedule_id })
   }
@@ -275,15 +286,28 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
         )}
       </td>
       <td className="px-3 py-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          onClick={handleDelete}
-          disabled={deleteSlot.isPending}
-        >
-          <Trash2 size={12} />
-        </Button>
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={handleDuplicate}
+            disabled={upsert.isPending}
+            title="Duplicate session"
+          >
+            <Copy size={12} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            onClick={handleDelete}
+            disabled={deleteSlot.isPending}
+            title="Delete session"
+          >
+            <Trash2 size={12} />
+          </Button>
+        </div>
       </td>
     </tr>
   )

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import type { TrainingSchedule, TrainingSlot, TrainingSlotWithTeam } from '@/types'
+import type { TrainingSchedule, TrainingSlot, TrainingSlotWithTeam, TrainingDay } from '@/types'
+
+const DAY_ORDER: TrainingDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 const SCHEDULE_KEY = ['training_schedules']
 const SLOTS_KEY = ['training_slots']
@@ -57,10 +59,15 @@ export function useTrainingSlots(scheduleId: string | null) {
         .from('training_slots')
         .select('*, team:teams(id, name)')
         .eq('schedule_id', scheduleId)
-        .order('day')
-        .order('start_time')
       if (error) return []
-      return (data ?? []) as unknown as TrainingSlotWithTeam[]
+      const slots = (data ?? []) as unknown as TrainingSlotWithTeam[]
+      return slots.sort((a, b) => {
+        const dayDiff = DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day)
+        if (dayDiff !== 0) return dayDiff
+        const timeDiff = a.start_time.localeCompare(b.start_time)
+        if (timeDiff !== 0) return timeDiff
+        return (a.venue ?? '').localeCompare(b.venue ?? '')
+      })
     },
   })
 }

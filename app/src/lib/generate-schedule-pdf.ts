@@ -53,12 +53,9 @@ function drawCell(
 // ── Core builder — returns the jsPDF document ─────────────────────────────────
 
 function buildScheduleDoc(scheduleName: string, slots: TrainingSlotWithTeam[]): jsPDF {
-  // 1. Derive unique venues (preserve first-seen order)
-  const venueOrder: string[] = []
-  for (const s of slots) {
-    if (s.venue && !venueOrder.includes(s.venue)) venueOrder.push(s.venue)
-  }
-  if (venueOrder.length === 0) venueOrder.push('–')
+  // 1. Derive unique venues, sorted alphabetically
+  const venueSet = new Set(slots.map((s) => s.venue).filter(Boolean) as string[])
+  const venueOrder: string[] = venueSet.size > 0 ? [...venueSet].sort((a, b) => a.localeCompare(b)) : ['–']
 
   // 2. Page sizing
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
