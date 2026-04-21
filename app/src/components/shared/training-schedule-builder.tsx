@@ -130,7 +130,7 @@ function AddSlotRow({
 // Single slot row (with drag-drop target for team)
 // ---------------------------------------------------------------------------
 
-function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
+function SlotRow({ slot, assignedTeamIds }: { slot: TrainingSlotWithTeam; assignedTeamIds: Set<string> }) {
   const upsert = useUpsertSlot()
   const deleteSlot = useDeleteSlot()
   const { data: allTeams = [] } = useTeams()
@@ -139,10 +139,14 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
   const [venueDraft, setVenueDraft] = useState(slot.venue)
   const [selectingTeam, setSelectingTeam] = useState(false)
 
+  // Teams already used in other slots (excluding this slot's own team)
+  const takenElsewhere = new Set([...assignedTeamIds].filter((id) => id !== slot.team_id))
+
   function handleDrop(e: React.DragEvent) {
     e.preventDefault()
     setDragOver(false)
     const teamId = e.dataTransfer.getData('text/plain')
+    if (teamId && takenElsewhere.has(teamId)) return
     upsert.mutate({
       id: slot.id,
       schedule_id: slot.schedule_id,
@@ -186,7 +190,7 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
       start_time: slot.start_time,
       end_time: slot.end_time,
       venue: slot.venue,
-      team_id: slot.team_id,
+      team_id: null,
     })
   }
 
@@ -257,7 +261,9 @@ function SlotRow({ slot }: { slot: TrainingSlotWithTeam }) {
           >
             <option value="">— No team —</option>
             {allTeams.map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
+              <option key={t.id} value={t.id} disabled={takenElsewhere.has(t.id)}>
+                {t.name}{takenElsewhere.has(t.id) ? ' (already assigned)' : ''}
+              </option>
             ))}
           </select>
         ) : slot.team ? (
@@ -324,6 +330,9 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
   const [addingDay, setAddingDay] = useState<TrainingDay | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // All team IDs currently assigned across every slot in this schedule
+  const assignedTeamIds = new Set(slots.map((s) => s.team_id).filter(Boolean) as string[])
 
   // Group slots by day for rendering
   const slotsByDay = DAYS.reduce<Record<string, TrainingSlotWithTeam[]>>((acc, day) => {
@@ -424,16 +433,27 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
         <div className="flex items-center gap-3 flex-wrap">
           <p className="text-xs font-heading uppercase tracking-wider text-muted-foreground shrink-0">Teams</p>
           <p className="text-xs text-muted-foreground/60 shrink-0">Drag into a slot</p>
-          {allTeams.map((team) => (
-            <div
-              key={team.id}
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/plain', team.id)}
-              className="bg-card border border-border text-xs font-medium text-foreground rounded px-2.5 py-1.5 cursor-grab active:cursor-grabbing select-none hover:border-primary/50 hover:bg-primary/5 transition-colors"
-            >
-              {team.name}
-            </div>
-          ))}
+          {allTeams.map((team) => {
+            const assigned = assignedTeamIds.has(team.id)
+            return (
+              <div
+                key={team.id}
+                draggable={!assigned}
+                onDragStart={(e) => {
+                  if (assigned) { e.preventDefault(); return }
+                  e.dataTransfer.setData('text/plain', team.id)
+                }}
+                title={assigned ? 'Already assigned to a slot' : undefined}
+                className={`border text-xs font-medium rounded px-2.5 py-1.5 select-none transition-colors ${
+                  assigned
+                    ? 'bg-muted border-border text-muted-foreground opacity-40 cursor-not-allowed'
+                    : 'bg-card border-border text-foreground cursor-grab active:cursor-grabbing hover:border-primary/50 hover:bg-primary/5'
+                }`}
+              >
+                {team.name}
+              </div>
+            )
+          })}
           {allTeams.length === 0 && (
             <p className="text-xs text-muted-foreground italic">No teams yet.</p>
           )}
@@ -480,7 +500,7 @@ function ScheduleEditor({ schedule }: { schedule: TrainingSchedule }) {
 
                 return [
                   ...daySlots.map((slot) => (
-                    <SlotRow key={slot.id} slot={slot} />
+                    <SlotRow key={slot.id} slot={slot} assignedTeamIds={assignedTeamIds} />
                   )),
                   addingDay === day ? (
                     <AddSlotRow
